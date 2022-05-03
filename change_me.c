@@ -20,6 +20,7 @@
 #include <stdint.h>
 #include <time.h>
 #include <unistd.h>
+#include <math.h>
 
 #include "mzapo_parlcd.h"
 #include "mzapo_phys.h"
@@ -50,8 +51,14 @@ void addToBuffer(int x, int y, pixel *p, pixel *buffer){
     buffer[x + y * SCREEN_SIZE_X] = *p;
 }
 
-void drawCircle(int x, int y){
-
+void drawCircle(int centerX, int centerY, int r, pixel *p, pixel *buffer){
+    for (int y = centerY - r, y <= centerY + r, y ++){
+        for (int x = centerY - r, x <= centerY + r, x ++){
+            if (sqrt(x*x + y*y) <= r){
+                addToBuffer(x, y, p, buffer);
+            }
+        }
+    }
 }
 
 int main(int argc, char *argv[])
@@ -85,7 +92,11 @@ int main(int argc, char *argv[])
         }
     }
 
-
+    pixel *p = malloc(sizeof(pixel));
+    p->r = 0xff;
+    p->g = 0xff;
+    p->b = 0x00;
+    drawCircle(x, y, 10, p, buffer)
 
     for (unsigned i = 0; i <480*320; i++){
         parlcd_write_data(parlcd_reg_base, buffer[i].d);
