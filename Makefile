@@ -9,7 +9,7 @@ LDFLAGS = -lrt -lpthread
 SOURCES = change_me.c mzapo_phys.c mzapo_parlcd.c
 #SOURCES += font_prop14x16.c font_rom8x16.c
 TARGET_EXE = change_me
-TARGET_IP ?= 192.168.223.119
+TARGET_IP ?= 192.168.223.112
 ifeq ($(TARGET_IP),)
 ifneq ($(filter debug run,$(MAKECMDGOALS)),)
 $(warning The target IP address is not set)
@@ -46,7 +46,7 @@ endif
 all: $(TARGET_EXE)
 
 $(TARGET_EXE): $(OBJECTS)
-	$(LINKER) $(LDFLAGS) -L. $^ -o $@ $(LDLIBS)
+	$(LINKER) $(LDFLAGS) -L. $^ -o $@ $(LDLIBS) -lm -lpthread
 
 .PHONY : dep all run copy-executable debug
 

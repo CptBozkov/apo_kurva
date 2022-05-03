@@ -21,6 +21,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <math.h>
+#include <pthread.h>
 
 #include "mzapo_parlcd.h"
 #include "mzapo_phys.h"
@@ -46,11 +47,16 @@ typedef union pixel {
 } pixel;
 
 
+
 void addToBuffer(int x, int y, pixel *p, pixel *buffer){
     buffer[x + y * SCREEN_SIZE_X] = *p;
 }
 
-void drawCircle(int centerX, int centerY, int r, pixel *p, pixel *buffer){
+void drawCircle(int centerX, int centerY, int r, unsigned red, unsigned green, unsigned blue, pixel *buffer){
+    pixel *p = malloc(sizeof(pixel));
+    p->r = red;
+    p->g = green;
+    p->b = blue;
     for (int y = -r; y <= r; y ++){
         for (int x = -r; x <= r; x ++){
             if (sqrt(x*x + y*y) <= r){
@@ -58,7 +64,24 @@ void drawCircle(int centerX, int centerY, int r, pixel *p, pixel *buffer){
             }
         }
     }
+    free(p);
 }
+
+void updateDisplay(pixel *buffer){
+    volatile void *parlcd_reg_base = map_phys_address(PARLCD_REG_BASE_PHYS, PARLCD_REG_SIZE, 0);
+    parlcd_write_cmd(parlcd_reg_base, 0x2c);
+    for (unsigned i = 0; i <480*320; i++){
+        parlcd_write_data(parlcd_reg_base, buffer[i].d);
+    }
+}
+
+void *myThreadFun(void *vargp)
+{
+    sleep(5);
+    printf("Printing GeeksQuiz from Thread \n");
+    return NULL;
+}
+
 
 int main(int argc, char *argv[])
 {
@@ -75,8 +98,7 @@ int main(int argc, char *argv[])
     *ledline = 0x80000001;
     *rgb1 = ((union led){.r = 0x10, .g = 0x10, .b = 0x10}).d;
 
-    volatile void *parlcd_reg_base = map_phys_address(PARLCD_REG_BASE_PHYS, PARLCD_REG_SIZE, 0);
-    parlcd_write_cmd(parlcd_reg_base, 0x2c);
+
 
 
 
@@ -84,23 +106,28 @@ int main(int argc, char *argv[])
     for (unsigned y = 0; y < SCREEN_SIZE_Y; y++){
         for (unsigned x = 0; x < SCREEN_SIZE_X; x++){
             pixel *p = malloc(sizeof(pixel));
-            p->r = 0xff;
-            p->g = 0xff;
+            p->r = 0x00;
+            p->g = 0x00;
             p->b = 0x00;
             addToBuffer(x, y, p, buffer);
         }
     }
 
-    pixel *p = malloc(sizeof(pixel));
-    p->r = 0xff;
-    p->g = 0xff;
-    p->b = 0x00;
-    drawCircle(x, y, 10, p, buffer);
+    updateDisplay(buffer);
+    drawCircle(20, 20, 10, 0x00, 0xff, 0x00, buffer);
 
-    for (unsigned i = 0; i <480*320; i++){
-        parlcd_write_data(parlcd_reg_base, buffer[i].d);
-    }
+    updateDisplay(buffer);
 
+    pthread_t thread_id;
+    printf("Before Thread\n");
+    pthread_create(&thread_id, NULL, myThreadFun, NULL);
+    pthread_join(thread_id, NULL);
+    printf("After Thread\n");
+
+    drawCircle(50, 50, 10, 0xff, 0xff, 0xff, buffer);
+    drawCircle(50, 80, 10, 0xff, 0xff, 0x00, buffer);
+
+    updateDisplay(buffer);
     free(buffer);
     return 0;
 }
