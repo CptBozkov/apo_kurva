@@ -84,7 +84,6 @@ void gameLoop(data_passer_t * dp, struct timespec *start, struct timespec *end, 
     *rgb1 = ((union led){.r = 0x10, .g = 0x10, .b = 0x10}).d;
 */
 
-
     volatile void *parlcd_reg_base = map_phys_address(PARLCD_REG_BASE_PHYS, PARLCD_REG_SIZE, 0);
     parlcd_write_cmd(parlcd_reg_base, 0x2c);
 
@@ -99,7 +98,6 @@ void gameLoop(data_passer_t * dp, struct timespec *start, struct timespec *end, 
 
     while (dp->run){
         clock_gettime(CLOCK_MONOTONIC, start);
-
 
         // sem prijed celej nas main loop
         //ty funkce nad a po printem drzej konstantni FPS
