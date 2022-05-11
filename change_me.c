@@ -4,6 +4,10 @@ void addToBuffer(unsigned x, unsigned y, pixel *p, pixel *buffer){
     buffer[x + y * SCREEN_SIZE_X] = *p;
 }
 
+pixel * getFromBuffer(unsigned x, unsigned y, pixel *buffer){
+    return &buffer[x + y * SCREEN_SIZE_X];
+}
+
 void drawCircle(int centerX, int centerY, int r, pixel *p, pixel *buffer){
     for (int y = -r; y <= r; y ++){
         for (int x = -r; x <= r; x ++){
@@ -40,13 +44,16 @@ pixel * createPixel(int r, int b, int g){
 player * createPlayer(int x, int y, pixel * color, char id){
     player * p = malloc(sizeof(player));
     p->id = id;
-    p->x = x;
-    p->y = y;
+    p->x = rand() % SCREEN_SIZE_X;
+    p->y = rand() % SCREEN_SIZE_Y;
+    p->width = BASE_PLAYER_WIDTH;
     p->rotation = (float)rand()/(float)(RAND_MAX/3.14*2);
     p->d_x = 1;
     p->d_y = 1;
     p->speed = BASE_PLAYER_SPEED;
     p->color = *color;
+    p->last_x = -100;
+    p->last_y = -100;
     return p;
 }
 
@@ -70,30 +77,55 @@ void updatePlayer(player * p, data_passer * dp){
     if (p->y > SCREEN_SIZE_Y || p->y < 0){
         p->d_y *= -1;
     }
-    float turn_speed = PI/(4 * TURN_SPEED);
+    float turn_speed = PI*TURN_SPEED/(4 * TURN_PARTS);
     if (p->id == 0){
         if (dp->keys[0]){
-            p->rotation -= turn_speed;
+            p->rotation -= turn_speed * (1.0/FPS);
         }
         if (dp->keys[1]){
-            p->rotation += turn_speed;
+            p->rotation += turn_speed * (1.0/FPS);
         }
     } else {
         if (dp->keys[2]){
-            p->rotation -= turn_speed;
+            p->rotation -= turn_speed * (1.0/FPS);
         }
         if (dp->keys[3]){
-            p->rotation += turn_speed;
+            p->rotation += turn_speed * (1.0/FPS);
         }
     }
 
+    p->x += p->d_x * p->speed * cos(p->rotation) * (1.0/FPS);
+    p->y += p->d_y * p->speed * sin(p->rotation) * (1.0/FPS);
+}
 
-    p->x += p->d_x * p->speed * cos(p->rotation);
-    p->y += p->d_y * p->speed * sin(p->rotation);
+void detectCollision(player * player, pixel * buffer){
+    for (int y = -player->width; y <= player->width; y ++){
+        for (int x = -player->width; x <= player->width; x ++){
+            if (player->x+x >= 0 && player->x+x < SCREEN_SIZE_X && player->y+y >= 0 && player->y+y < SCREEN_SIZE_Y){
+                if (sqrt(x*x + y*y) <= player->width){
+                    int d_x = player->last_x-(player->x+x);
+                    int d_y = player->last_y-(player->y+y);
+                    if (sqrt(d_x*d_x + d_y*d_y) > player->width){
+                        fflush(stdout);
+                        pixel * p = getFromBuffer(player->x+x, player->y+y, buffer);
+                        if ((p->r != 0 || p->g != 0 || p->b != 0)){
+                            printf("collision: player%d\n", player->id);
+                            fflush(stdout);
+                            player->last_x = player->x;
+                            player->last_y = player->y;
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    player->last_x = player->x;
+    player->last_y = player->y;
 }
 
 void drawPlayer(player * p, pixel * buffer){
-    drawCircle((int) p->x, (int) p->y, 10, &p->color, buffer);
+    drawCircle((int) p->x, (int) p->y, p->width, &p->color, buffer);
 }
 
 void gameLoop(data_passer * dp, struct timespec *start, struct timespec *end, struct timespec *res){
@@ -107,7 +139,8 @@ void gameLoop(data_passer * dp, struct timespec *start, struct timespec *end, st
     volatile uint32_t *knobs_input = (spiled_reg_base + SPILED_REG_KNOBS_8BIT_o);
     knobs k;
 
-
+    time_t t;
+    srand((unsigned) time(&t));
 
     pixel * b;
 
@@ -154,6 +187,8 @@ void gameLoop(data_passer * dp, struct timespec *start, struct timespec *end, st
 
             updatePlayer(player1, dp);
             updatePlayer(player2, dp);
+            detectCollision(player1, b);
+            detectCollision(player2, b);
             drawPlayer(player1, b);
             drawPlayer(player2, b);
 
@@ -163,7 +198,8 @@ void gameLoop(data_passer * dp, struct timespec *start, struct timespec *end, st
 
             clock_gettime(CLOCK_MONOTONIC, end);
             res->tv_nsec = 1000000000/FPS - (end->tv_nsec - start->tv_nsec);
-            nanosleep(res, NULL);
+            struct timespec ts = {0, res->tv_nsec};
+            nanosleep(&ts, NULL);
         }
     }
     // do dp vidi oba thready (to je ten voio pointer na struct)
@@ -219,8 +255,8 @@ void keyboard(data_passer * dp){
                 case 1: dp->run = 0; break;
                 case 64: dp->clear_game_buffer = true; break;
             }
-            printf("Key: %i State: %i\n",ev.code,ev.value);
-            fflush(stdout);
+            //printf("Key: %i State: %i\n",ev.code,ev.value);
+            //fflush(stdout);
         }
         if(ev.type == 1 && ev.value == 0) {
             switch (ev.code) {
