@@ -134,12 +134,32 @@ void drawPlayer(player * p, pixel * buffer){
     drawCircle((int) p->x, (int) p->y, p->width, &p->color, buffer);
 }
 
+#define LEDLINE_COUNT 32
+
+int get_ledline_code(char *score) {
+    if (score[0] > LEDLINE_COUNT/2 || score[1] > LEDLINE_COUNT/2) return 0xffffffff;
+
+    // player 0
+    int sum0 = 0;
+    for (int i = LEDLINE_COUNT-1; i >= LEDLINE_COUNT-score[0]; --i) {
+        sum0 += pow(2, i);
+    }
+
+    // player 1
+    int sum1 = 0;
+    for (int i = 0; i < score[1]; ++i) {
+        sum1 += pow(2, i);
+    }
+
+    return sum0 + sum1;
+}
+
 void gameLoop(data_passer * dp, struct timespec *start, struct timespec *end, struct timespec *res){
     void *parlcd_reg_base = map_phys_address(PARLCD_REG_BASE_PHYS, PARLCD_REG_SIZE, 0);
     volatile void *spiled_reg_base = map_phys_address(SPILED_REG_BASE_PHYS, SPILED_REG_SIZE, 0);
     parlcd_write_cmd(parlcd_reg_base, 0x2c);
     volatile uint32_t *ledline = (spiled_reg_base + SPILED_REG_LED_LINE_o);
-    *ledline = 0x80000001;
+    *ledline = get_ledline_code(SCORE);
     volatile uint32_t *rgb1 = (spiled_reg_base + SPILED_REG_LED_RGB1_o);
     *rgb1 = ((union led){.r = 0x10, .g = 0x10, .b = 0x10}).d;
     volatile uint32_t *knobs_input = (spiled_reg_base + SPILED_REG_KNOBS_8BIT_o);
