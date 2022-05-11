@@ -27,6 +27,8 @@
 #define BASE_PLAYER_WIDTH 5
 #define MAX_LIVES 10
 
+#define ARENA_WALL_WIDTH 5
+
 #define PI 3.14159
 #define TURN_SPEED 1
 
@@ -76,7 +78,7 @@ typedef struct player {
 typedef struct data_passer{
     pixel *game_buffer;
     pixel *menu_buffer;
-    int drawnBuffer;
+    int scene;
 
     bool draw;
     bool doneDraw;

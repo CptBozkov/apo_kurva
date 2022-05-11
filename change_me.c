@@ -31,6 +31,20 @@ void clearBuffer(pixel *buffer) {
         }
     }
 }
+void clearArena(pixel *buffer) {
+    clearBuffer(buffer);
+    pixel p;
+    p.r = 0xff;
+    p.g = 0xff;
+    p.b = 0xff;
+    for (unsigned y = 0; y < SCREEN_SIZE_Y; y++){
+        for (unsigned x = 0; x < SCREEN_SIZE_X; x++){
+            if (x < ARENA_WALL_WIDTH || x > SCREEN_SIZE_X - ARENA_WALL_WIDTH && x || y < ARENA_WALL_WIDTH || y > SCREEN_SIZE_Y - ARENA_WALL_WIDTH){
+                addToBuffer(x, y, &p, buffer);
+            }
+        }
+    }
+}
 
 pixel * createPixel(int r, int b, int g){
     pixel * p = malloc(sizeof(pixel));
@@ -68,7 +82,7 @@ data_passer * createDataPasser(){
     data_passer * dp = malloc(sizeof(data_passer));
     dp->game_buffer = malloc(SCREEN_SIZE_X*SCREEN_SIZE_Y*sizeof(pixel));
     dp->menu_buffer = malloc(SCREEN_SIZE_X*SCREEN_SIZE_Y*sizeof(pixel));
-    dp->drawnBuffer = 1;
+    dp->scene = 1;
     dp->draw = false;
     dp->doneDraw = true;
     dp->run = true;
@@ -138,17 +152,17 @@ void drawPlayer(player * p, pixel * buffer){
 
 #define LEDLINE_COUNT 32
 
-long getLedlineCode(int s1, int s2) {
+unsigned long getLedlineCode(int s1, int s2) {
     if (s1 > LEDLINE_COUNT/2 || s2 > LEDLINE_COUNT/2) return 0xffffffff;
 
     // player 0
-    long sum0 = 0;
+    unsigned long sum0 = 0;
     for (int i = LEDLINE_COUNT-1; i >= LEDLINE_COUNT-s1; --i) {
         sum0 += pow(2, i);
     }
 
     // player 1
-    int sum1 = 0;
+    unsigned long sum1 = 0;
     for (int i = 0; i < s2; ++i) {
         sum1 += pow(2, i);
     }
@@ -191,7 +205,7 @@ void gameLoop(data_passer * dp, struct timespec *start, struct timespec *end, st
     player * player2 = createPlayer(createPixel(0xff, 0x00, 0x00), 1);
 
 
-    clearBuffer(dp->game_buffer);
+    clearArena(dp->game_buffer);
     clearBuffer(dp->menu_buffer);
 
     bool reset = false;
@@ -203,58 +217,73 @@ void gameLoop(data_passer * dp, struct timespec *start, struct timespec *end, st
             // sem prijde celej nas main loop
             dp->doneDraw = false;
             dp->draw = true;
-
-            b = dp->game_buffer;
-            /*dp->drawnBuffer *= -1;
-            if (dp->drawnBuffer == 1) {
+            if (dp->scene == 0){
                 b = dp->game_buffer;
-            } else {
+
+                if (dp->clear_game_buffer){
+                    dp->clear_game_buffer = false;
+                    clearArena(dp->game_buffer);
+                }
+
+                updatePlayer(player1, dp);
+                updatePlayer(player2, dp);
+
+                if (reset){
+                    reset = false;
+                    sleep(1);
+
+                }
+
+                if (detectCollision(player1, b)){
+                    player1->lives -= 1;
+                    reset = true;
+                }
+                if (detectCollision(player2, b)){
+                    player2->lives -= 1;
+                    reset = true;
+                }
+
+                if (reset){
+                    uint32_t last_lives = *ledline;
+                    printf("%d:%d\n", player1->lives, player2->lives);
+                    fflush(stdout);
+
+                    struct timespec short_sl = {0, 200000000};
+                    for (int i = 0; i < 4; i ++){
+                        nanosleep(&short_sl, NULL);
+                        *ledline = getLedlineCode(player1->lives, player2->lives);
+                        nanosleep(&short_sl, NULL);
+                        *ledline = last_lives;
+                    }
+
+                    *ledline = getLedlineCode(player1->lives, player2->lives);
+
+                    resetPlayer(player1);
+                    resetPlayer(player2);
+                    clearArena(dp->game_buffer);
+                } else {
+                    drawPlayer(player1, b);
+                    drawPlayer(player2, b);
+                }
+            }
+
+            if (dp->scene == 1){
                 b = dp->menu_buffer;
-            }*/
+                drawCircle(SCREEN_SIZE_X/4, SCREEN_SIZE_Y/2, 30, createPixel(0x20, 0x20,0x20), b);
+                drawCircle(3*SCREEN_SIZE_X/4, SCREEN_SIZE_Y/2, 30, createPixel(0x20, 0x20,0x20), b);
 
-            k.d = *knobs_input;
-            pixel->r = k.r;
-            pixel->g = k.g;
-            pixel->b = k.b;
+                k.d = *knobs_input;
 
-            /*if (k.r_p){
-                speed += 1;
+                if (k.g_p){
+                    dp->scene = 0;
+                }
+                /*if (k.r_p){
+                    speed += 1;
+                }
+                if (k.b_p){
+                    speed -= 1;
+                }*/
             }
-            if (k.b_p){
-                speed -= 1;
-            }*/
-            if (dp->clear_game_buffer){
-                dp->clear_game_buffer = false;
-                clearBuffer(dp->game_buffer);
-            }
-
-            updatePlayer(player1, dp);
-            updatePlayer(player2, dp);
-
-            if (detectCollision(player1, b)){
-                player1->lives -= 1;
-                reset = true;
-            }
-            if (detectCollision(player2, b)){
-                player2->lives -= 1;
-                reset = true;
-            }
-
-            if (reset){
-                reset = false;
-                *ledline = getLedlineCode(player1->lives, player2->lives);
-                printf("%d:%d\n", player1->lives, player2->lives);
-                fflush(stdout);
-                sleep(3);
-
-                resetPlayer(player1);
-                resetPlayer(player2);
-                clearBuffer(dp->game_buffer);
-            } else {
-                drawPlayer(player1, b);
-                drawPlayer(player2, b);
-            }
-
 
             // tady konci nas main loop
 
@@ -280,12 +309,11 @@ void draw(data_passer * dp){
         if (dp->draw){
             dp->draw = false;
 
-            b = dp->game_buffer;
-            /*if (dp->drawnBuffer == 1) {
+            if (dp->scene == 1) {
                 b = dp->menu_buffer;
             } else {
                 b = dp->game_buffer;
-            }*/
+            }
 
             for (unsigned i = 0; i <480*320; i++){
                 parlcd_write_data(parlcd_reg_base, b[i].d);
