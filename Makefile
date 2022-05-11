@@ -90,3 +90,9 @@ debug: copy-executable $(TARGET_EXE)
 	ddd --debugger gdb-multiarch -x connect.gdb $(TARGET_EXE)
 
 -include depend
+
+IP = 192.168.223.112
+
+send:
+	scp -r ../apo_kurva-backup root@$(IP):~
+	ssh root@$(IP) "(killall change_me || true) && cd apo_kurva-backup && make clean && make && ./change_me"
