@@ -104,7 +104,7 @@ void updatePlayer(player * p, data_passer * dp){
     p->y += p->d_y * p->speed * sin(p->rotation) * (1.0/FPS);
 }
 
-void detectCollision(player * player, pixel * buffer){
+int detectCollision(player * player, pixel * buffer){
     for (int y = -player->width; y <= player->width; y ++){
         for (int x = -player->width; x <= player->width; x ++){
             if (player->x+x >= 0 && player->x+x < SCREEN_SIZE_X && player->y+y >= 0 && player->y+y < SCREEN_SIZE_Y){
@@ -119,7 +119,7 @@ void detectCollision(player * player, pixel * buffer){
                             fflush(stdout);
                             player->last_x = player->x;
                             player->last_y = player->y;
-                            return;
+                            return 1;
                         }
                     }
                 }
@@ -128,6 +128,7 @@ void detectCollision(player * player, pixel * buffer){
     }
     player->last_x = player->x;
     player->last_y = player->y;
+    return 0;
 }
 
 void drawPlayer(player * p, pixel * buffer){
@@ -136,22 +137,35 @@ void drawPlayer(player * p, pixel * buffer){
 
 #define LEDLINE_COUNT 32
 
-int get_ledline_code(char *score) {
-    if (score[0] > LEDLINE_COUNT/2 || score[1] > LEDLINE_COUNT/2) return 0xffffffff;
+int getLedlineCode(char s1, char s2) {
+    if (s1 > LEDLINE_COUNT/2 || s2 > LEDLINE_COUNT/2) return 0xffffffff;
 
     // player 0
     int sum0 = 0;
-    for (int i = LEDLINE_COUNT-1; i >= LEDLINE_COUNT-score[0]; --i) {
+    for (int i = LEDLINE_COUNT-1; i >= LEDLINE_COUNT-s1; --i) {
         sum0 += pow(2, i);
     }
 
     // player 1
     int sum1 = 0;
-    for (int i = 0; i < score[1]; ++i) {
+    for (int i = 0; i < s2; ++i) {
         sum1 += pow(2, i);
     }
 
     return sum0 + sum1;
+}
+
+void resetPlayer(player * p){
+    if (p->id == 0){
+        p->x = SCREEN_SIZE_X/8 + rand() % (SCREEN_SIZE_X/4);
+        p->y = SCREEN_SIZE_Y/4 + rand() % (SCREEN_SIZE_Y/2);
+    } else {
+        p->x = 5*SCREEN_SIZE_X/8 + rand() % (SCREEN_SIZE_X/4);
+        p->y = SCREEN_SIZE_Y/4 + rand() % (SCREEN_SIZE_Y/2);
+    }
+    p->rotation = (float)rand()/(float)(RAND_MAX/3.14*2);
+    p->last_x = -100;
+    p->last_y = -100;
 }
 
 void gameLoop(data_passer * dp, struct timespec *start, struct timespec *end, struct timespec *res){
@@ -159,7 +173,7 @@ void gameLoop(data_passer * dp, struct timespec *start, struct timespec *end, st
     volatile void *spiled_reg_base = map_phys_address(SPILED_REG_BASE_PHYS, SPILED_REG_SIZE, 0);
     parlcd_write_cmd(parlcd_reg_base, 0x2c);
     volatile uint32_t *ledline = (spiled_reg_base + SPILED_REG_LED_LINE_o);
-    *ledline = get_ledline_code(SCORE);
+    *ledline = getLedlineCode(MAX_LIVES, MAX_LIVES);
     volatile uint32_t *rgb1 = (spiled_reg_base + SPILED_REG_LED_RGB1_o);
     *rgb1 = ((union led){.r = 0x10, .g = 0x10, .b = 0x10}).d;
     volatile uint32_t *knobs_input = (spiled_reg_base + SPILED_REG_KNOBS_8BIT_o);
@@ -178,6 +192,8 @@ void gameLoop(data_passer * dp, struct timespec *start, struct timespec *end, st
 
     clearBuffer(dp->game_buffer);
     clearBuffer(dp->menu_buffer);
+
+    bool reset = false;
 
     while (dp->run){
         if (dp->doneDraw) {
@@ -213,10 +229,27 @@ void gameLoop(data_passer * dp, struct timespec *start, struct timespec *end, st
 
             updatePlayer(player1, dp);
             updatePlayer(player2, dp);
-            detectCollision(player1, b);
-            detectCollision(player2, b);
-            drawPlayer(player1, b);
-            drawPlayer(player2, b);
+
+            if (detectCollision(player1, b)){
+                player1->lives --;
+                reset = true;
+            }
+            if (detectCollision(player2, b)){
+                player2->lives --;
+                reset = true;
+            }
+
+            if (reset){
+                reset = false;
+
+                *ledline = getLedlineCode(player1->lives, player2->lives);
+                resetPlayer(player1);
+                resetPlayer(player2);
+                clearBuffer(dp->game_buffer);
+            } else {
+                drawPlayer(player1, b);
+                drawPlayer(player2, b);
+            }
 
 
             // tady konci nas main loop

@@ -23,13 +23,15 @@
 #define SCREEN_SIZE_X 480
 #define SCREEN_SIZE_Y 320
 
-#define BASE_PLAYER_SPEED 2
+#define BASE_PLAYER_SPEED 50
+#define BASE_PLAYER_WIDTH 5
+#define MAX_LIVES 10
 
 #define PI 3.14159
-#define TURN_SPEED 10
+#define TURN_SPEED 50
+#define TURN_PARTS 10
 
-#define FPS 60
-
+#define FPS 30
 
 union led {
     struct {
@@ -59,17 +61,19 @@ typedef union knobs {
 
 typedef struct player {
     char id;
+    char lives;
     float x;
     float y;
     float speed;
+    int width;
     int d_x;
     int d_y;
     float rotation;
     pixel color;
+    float last_x;
+    float last_y;
 } player;
 
-// tenhle struct bude slouzit k prenosu dat mezi thready
-// pri volani funkce na spusteni thread mu muzes predat jeden void pointer (v tomhle pripade jsem tam dal struct data_passer)
 typedef struct data_passer{
     pixel *game_buffer;
     pixel *menu_buffer;
