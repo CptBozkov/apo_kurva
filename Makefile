@@ -94,6 +94,8 @@ debug: copy-executable $(TARGET_EXE)
 -include depend
 
 send:
+	ssh root@$(TARGET_IP) "rm -rf $(TARGET_DIR)"
+	exit
 	scp -r ../$(TARGET_DIR) root@$(TARGET_IP):~
 	ssh root@$(TARGET_IP) "cd $(TARGET_DIR) && make clean && make"
 	exit
