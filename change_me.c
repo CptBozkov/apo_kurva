@@ -22,6 +22,9 @@
 
 #define BASE_PLAYER_SPEED 2
 
+#define PI 3.14159
+#define TURN_SPEED 10
+
 #define FPS 60
 
 
@@ -77,6 +80,8 @@ typedef struct data_passer{
     char * keys;
 
     bool color;
+
+    bool clear_game_buffer;
 } data_passer;
 
 
@@ -99,9 +104,9 @@ void drawCircle(int centerX, int centerY, int r, pixel *p, pixel *buffer){
 
 void clearBuffer(pixel *buffer) {
     pixel p;
-    p.r = 31;
-    p.g = 63;
-    p.b = 31;
+    p.r = 0;
+    p.g = 0;
+    p.b = 0;
     for (unsigned y = 0; y < SCREEN_SIZE_Y; y++){
         for (unsigned x = 0; x < SCREEN_SIZE_X; x++){
             addToBuffer(x, y, &p, buffer);
@@ -150,23 +155,20 @@ void updatePlayer(player * p, data_passer * dp){
     if (p->y > SCREEN_SIZE_Y || p->y < 0){
         p->d_y *= -1;
     }
+    float turn_speed = PI/(4 * TURN_SPEED);
     if (p->id == 0){
         if (dp->keys[0]){
-            dp->keys[0] = 0;
-            p->rotation -= 1;
+            p->rotation -= turn_speed;
         }
-        if (dp->keys[2]){
-            dp->keys[2] = 0;
-            p->rotation += 1;
+        if (dp->keys[1]){
+            p->rotation += turn_speed;
         }
     } else {
-        if (dp->keys[3]){
-            dp->keys[3] = 0;
-            p->rotation -= 1;
+        if (dp->keys[2]){
+            p->rotation -= turn_speed;
         }
-        if (dp->keys[5]){
-            dp->keys[5] = 0;
-            p->rotation += 1;
+        if (dp->keys[3]){
+            p->rotation += turn_speed;
         }
     }
 
@@ -230,6 +232,10 @@ void gameLoop(data_passer * dp, struct timespec *start, struct timespec *end, st
             if (k.b_p){
                 speed -= 1;
             }*/
+            if (dp->clear_game_buffer){
+                dp->clear_game_buffer = false;
+                clearBuffer(dp->game_buffer);
+            }
 
             updatePlayer(player1, dp);
             updatePlayer(player2, dp);
@@ -286,20 +292,28 @@ void keyboard(data_passer * dp){
 
     signal(SIGINT, INThandler);
 
-    while(1)
+    while(dp->run)
     {
         read(device,&ev, sizeof(ev));
         if(ev.type == 1 && ev.value == 1){
             switch (ev.code) {
                 case 30: dp->keys[0] = 1; break;
-                case 31: dp->keys[1] = 1; break;
-                case 32: dp->keys[2] = 1; break;
-                case 105: dp->keys[3] = 1; break;
-                case 108: dp->keys[4] = 1; break;
-                case 106: dp->keys[5] = 1; break;
+                case 32: dp->keys[1] = 1; break;
+                case 105: dp->keys[2] = 1; break;
+                case 106: dp->keys[3] = 1; break;
+                case 1: dp->run = 0; break;
+                case 64: dp->clear_game_buffer = true; break;
             }
             printf("Key: %i State: %i\n",ev.code,ev.value);
             fflush(stdout);
+        }
+        if(ev.type == 1 && ev.value == 0) {
+            switch (ev.code) {
+                case 30: dp->keys[0] = 0; break;
+                case 32: dp->keys[1] = 0; break;
+                case 105: dp->keys[2] = 0; break;
+                case 106: dp->keys[3] = 0; break;
+            }
         }
     }
 }
