@@ -21,9 +21,9 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "mzapo_parlcd.h"
-#include "mzapo_phys.h"
-#include "mzapo_regs.h"
+#include "../lib/mzapo_parlcd.h"
+#include "../lib/mzapo_phys.h"
+#include "../lib/mzapo_regs.h"
 
 union led {
     struct {
