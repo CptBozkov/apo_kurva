@@ -4,17 +4,19 @@ CXX = arm-linux-gnueabihf-g++
 CPPFLAGS = -I .
 CFLAGS =-g -std=gnu99 -O1 -Wall
 CXXFLAGS = -g -std=gnu++11 -O1 -Wall
-LDFLAGS = -lrt -lpthread
+LDFLAGS = -lrt -lpthread -lm
 
 SOURCES = change_me.c mzapo_phys.c mzapo_parlcd.c
 #SOURCES += font_prop14x16.c font_rom8x16.c
 TARGET_EXE = change_me
-TARGET_IP ?= 192.168.223.112
+TARGET_IP = 192.168.223.112
+TARGET_DIR = apo_kurva
+
 ifeq ($(TARGET_IP),)
 ifneq ($(filter debug run,$(MAKECMDGOALS)),)
 $(warning The target IP address is not set)
 $(warning Run as "TARGET_IP=192.168.202.xxx make run" or modify Makefile)
-TARGET_IP ?= 192.168.202.203
+TARGET_IP ?= 192.168.223.103
 endif
 endif
 TARGET_DIR ?= /tmp/$(shell whoami)
@@ -46,7 +48,7 @@ endif
 all: $(TARGET_EXE)
 
 $(TARGET_EXE): $(OBJECTS)
-	$(LINKER) $(LDFLAGS) -L. $^ -o $@ $(LDLIBS) -lm -lpthread
+	$(LINKER) $(LDFLAGS) -L. $^ -o $@ $(LDLIBS)
 
 .PHONY : dep all run copy-executable debug
 
@@ -91,8 +93,10 @@ debug: copy-executable $(TARGET_EXE)
 
 -include depend
 
-IP = 192.168.223.112
-
 send:
-	scp -r ../apo_kurva-backup root@$(IP):~
-	ssh root@$(IP) "(killall change_me || true) && cd apo_kurva-backup && make clean && make && ./change_me"
+	ssh root@$(TARGET_IP) "rm -rf $(TARGET_DIR)"
+	exit
+	scp -r ../$(TARGET_DIR) root@$(TARGET_IP):~
+	ssh root@$(TARGET_IP) "cd $(TARGET_DIR) && make clean && make"
+	exit
+	ssh root@$(TARGET_IP) "(killall $(TARGET_EXE) || true) && cd $(TARGET_DIR) && ./$(TARGET_EXE)"
