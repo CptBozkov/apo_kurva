@@ -24,6 +24,7 @@
 
 #define FPS 60
 
+
 union led {
     struct {
         uint8_t b, g, r;
@@ -51,11 +52,13 @@ typedef union knobs {
 } knobs;
 
 typedef struct player {
+    char id;
     float x;
     float y;
     float speed;
     int d_x;
     int d_y;
+    float rotation;
     pixel color;
 } player;
 
@@ -72,6 +75,8 @@ typedef struct data_passer{
     bool run;
 
     char * keys;
+
+    bool color;
 } data_passer;
 
 
@@ -112,10 +117,12 @@ pixel * createPixel(int r, int b, int g){
     return p;
 }
 
-player * createPlayer(int x, int y, pixel * color){
+player * createPlayer(int x, int y, pixel * color, char id){
     player * p = malloc(sizeof(player));
+    p->id = id;
     p->x = x;
     p->y = y;
+    p->rotation = (float)rand()/(float)(RAND_MAX/3.14*2);
     p->d_x = 1;
     p->d_y = 1;
     p->speed = BASE_PLAYER_SPEED;
@@ -136,15 +143,36 @@ data_passer * createDataPasser(){
     return dp;
 }
 
-void updatePlayer(player * p){
+void updatePlayer(player * p, data_passer * dp){
     if (p->x > SCREEN_SIZE_X || p->x < 0){
         p->d_x *= -1;
     }
     if (p->y > SCREEN_SIZE_Y || p->y < 0){
         p->d_y *= -1;
     }
-    p->x += p->d_x * p->speed;
-    p->y += p->d_y * p->speed;
+    if (p->id == 0){
+        if (dp->keys[0]){
+            dp->keys[0] = 0;
+            p->rotation -= 1;
+        }
+        if (dp->keys[2]){
+            dp->keys[2] = 0;
+            p->rotation += 1;
+        }
+    } else {
+        if (dp->keys[3]){
+            dp->keys[3] = 0;
+            p->rotation -= 1;
+        }
+        if (dp->keys[5]){
+            dp->keys[5] = 0;
+            p->rotation += 1;
+        }
+    }
+
+
+    p->x += p->d_x * p->speed * cos(p->rotation);
+    p->y += p->d_y * p->speed * sin(p->rotation);
 }
 
 void drawPlayer(player * p, pixel * buffer){
@@ -168,8 +196,8 @@ void gameLoop(data_passer * dp, struct timespec *start, struct timespec *end, st
 
     pixel * pixel = createPixel(0xff, 0xff, 0x00);
 
-    player * player1 = createPlayer(SCREEN_SIZE_X/2, SCREEN_SIZE_Y/2, createPixel(0xff, 0xff, 0x00));
-    player * player2 = createPlayer(0, SCREEN_SIZE_Y/2, createPixel(0xff, 0x00, 0x00));
+    player * player1 = createPlayer(SCREEN_SIZE_X/2, SCREEN_SIZE_Y/2, createPixel(0xff, 0xff, 0x00), 0);
+    player * player2 = createPlayer(0, SCREEN_SIZE_Y/2, createPixel(0xff, 0x00, 0x00), 1);
 
 
     clearBuffer(dp->game_buffer);
@@ -203,8 +231,8 @@ void gameLoop(data_passer * dp, struct timespec *start, struct timespec *end, st
                 speed -= 1;
             }*/
 
-            updatePlayer(player1);
-            updatePlayer(player2);
+            updatePlayer(player1, dp);
+            updatePlayer(player2, dp);
             drawPlayer(player1, b);
             drawPlayer(player2, b);
 
@@ -250,6 +278,7 @@ void draw(data_passer * dp){
 void INThandler(){
     exit(0);
 }
+
 void keyboard(data_passer * dp){
     char devname[] = "/dev/input/event0";
     int device = open(devname, O_RDONLY);
@@ -261,6 +290,14 @@ void keyboard(data_passer * dp){
     {
         read(device,&ev, sizeof(ev));
         if(ev.type == 1 && ev.value == 1){
+            switch (ev.code) {
+                case 30: dp->keys[0] = 1; break;
+                case 31: dp->keys[1] = 1; break;
+                case 32: dp->keys[2] = 1; break;
+                case 105: dp->keys[3] = 1; break;
+                case 108: dp->keys[4] = 1; break;
+                case 106: dp->keys[5] = 1; break;
+            }
             printf("Key: %i State: %i\n",ev.code,ev.value);
             fflush(stdout);
         }
@@ -299,7 +336,7 @@ int main (){
 
     pthread_create(&tid0, NULL, gameLoopThread, (void *)dp);
     pthread_create(&tid1, NULL, drawThread, (void *)dp);
-    pthread_create(&tid2, NULL, drawThread, (void *)dp);
+    pthread_create(&tid2, NULL, keyboardThread, (void *)dp);
 
     pthread_exit(NULL);
     return 0;
