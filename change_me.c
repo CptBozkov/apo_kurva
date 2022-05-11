@@ -68,6 +68,8 @@ typedef struct data_passer{
     bool doneDraw;
 
     bool run;
+
+    char * keys;
 } data_passer;
 
 
@@ -127,6 +129,7 @@ data_passer * createDataPasser(){
     dp->draw = false;
     dp->doneDraw = true;
     dp->run = true;
+    dp->keys = malloc(sizeof(char) * 6);
     return dp;
 }
 
@@ -242,6 +245,12 @@ void draw(data_passer * dp){
     }
 }
 
+void keyboard(data_passer * dp){
+    while (1){
+
+    }
+}
+
 // funkce kterou predavam gameLoopThread
 void* gameLoopThread(void * dp_void){
     data_passer * dp = (data_passer *) dp_void;
@@ -259,14 +268,22 @@ void* drawThread(void * dp_void){
     return NULL;
 }
 
+void* keyboardThread(void * dp_void){
+    data_passer * dp = (data_passer *) dp_void;
+    draw(dp);
+    return NULL;
+}
+
 int main (){
     data_passer * dp = createDataPasser();
 
     pthread_t tid0;
     pthread_t tid1;
+    pthread_t tid2;
 
     pthread_create(&tid0, NULL, gameLoopThread, (void *)dp);
     pthread_create(&tid1, NULL, drawThread, (void *)dp);
+    pthread_create(&tid2, NULL, drawThread, (void *)dp);
 
     pthread_exit(NULL);
     return 0;
