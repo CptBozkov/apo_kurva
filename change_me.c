@@ -20,7 +20,6 @@ void drawCircle(int centerX, int centerY, int r, pixel *p, pixel *buffer){
     }
 }
 
-
 void clearBuffer(pixel *buffer) {
     pixel p;
     p.r = 0;
@@ -44,8 +43,15 @@ pixel * createPixel(int r, int b, int g){
 player * createPlayer(int x, int y, pixel * color, char id){
     player * p = malloc(sizeof(player));
     p->id = id;
-    p->x = rand() % SCREEN_SIZE_X;
-    p->y = rand() % SCREEN_SIZE_Y;
+
+    if (id == 0){
+        p->x = SCREEN_SIZE_X/8 + rand() % (SCREEN_SIZE_X/4);
+        p->y = SCREEN_SIZE_Y/4 + rand() % (SCREEN_SIZE_Y/2);
+    } else {
+        p->x = 5*SCREEN_SIZE_X/8 + rand() % (SCREEN_SIZE_X/4);
+        p->y = SCREEN_SIZE_Y/4 + rand() % (SCREEN_SIZE_Y/2);
+    }
+
     p->width = BASE_PLAYER_WIDTH;
     p->rotation = (float)rand()/(float)(RAND_MAX/3.14*2);
     p->d_x = 1;
