@@ -9,7 +9,9 @@
 #include <math.h>
 #include <pthread.h>
 #include <stdbool.h>
-#include </usr/include/libusb-1.0/libusb.h>
+#include <fcntl.h>
+#include <linux/input.h>
+#include <signal.h>
 
 #include "mzapo_parlcd.h"
 #include "mzapo_phys.h"
@@ -245,9 +247,23 @@ void draw(data_passer * dp){
     }
 }
 
+void INThandler(){
+    exit(0);
+}
 void keyboard(data_passer * dp){
-    while (1){
+    char devname[] = "/dev/input/event0";
+    int device = open(devname, O_RDONLY);
+    struct input_event ev;
 
+    signal(SIGINT, INThandler);
+
+    while(1)
+    {
+        read(device,&ev, sizeof(ev));
+        if(ev.type == 1 && ev.value == 1){
+            printf("Key: %i State: %i\n",ev.code,ev.value);
+            fflush(stdout);
+        }
     }
 }
 
