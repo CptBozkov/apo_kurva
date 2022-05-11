@@ -130,9 +130,9 @@ data_passer * createDataPasser(){
     dp->doneDraw = true;
     dp->run = true;
     dp->keys = malloc(sizeof(char) * 6);
+    memset(dp->keys, 0, sizeof(char) * 6);
     return dp;
 }
-
 
 void updatePlayer(player * p){
     if (p->x > SCREEN_SIZE_X || p->x < 0){
@@ -270,7 +270,7 @@ void* drawThread(void * dp_void){
 
 void* keyboardThread(void * dp_void){
     data_passer * dp = (data_passer *) dp_void;
-    draw(dp);
+    keyboard(dp);
     return NULL;
 }
 
