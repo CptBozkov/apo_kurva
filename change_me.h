@@ -28,10 +28,9 @@
 #define MAX_LIVES 10
 
 #define PI 3.14159
-#define TURN_SPEED 50
-#define TURN_PARTS 10
+#define TURN_SPEED 1
 
-#define FPS 30
+#define FPS 20
 
 union led {
     struct {
@@ -61,7 +60,7 @@ typedef union knobs {
 
 typedef struct player {
     char id;
-    char lives;
+    int lives;
     float x;
     float y;
     float speed;

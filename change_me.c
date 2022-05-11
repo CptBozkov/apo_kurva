@@ -40,7 +40,7 @@ pixel * createPixel(int r, int b, int g){
     return p;
 }
 
-player * createPlayer(int x, int y, pixel * color, char id){
+player * createPlayer(pixel * color, char id){
     player * p = malloc(sizeof(player));
     p->id = id;
 
@@ -60,6 +60,7 @@ player * createPlayer(int x, int y, pixel * color, char id){
     p->color = *color;
     p->last_x = -100;
     p->last_y = -100;
+    p->lives = MAX_LIVES;
     return p;
 }
 
@@ -83,7 +84,7 @@ void updatePlayer(player * p, data_passer * dp){
     if (p->y > SCREEN_SIZE_Y || p->y < 0){
         p->d_y *= -1;
     }
-    float turn_speed = PI*TURN_SPEED/(4 * TURN_PARTS);
+    float turn_speed = PI*TURN_SPEED;
     if (p->id == 0){
         if (dp->keys[0]){
             p->rotation -= turn_speed * (1.0/FPS);
@@ -137,11 +138,11 @@ void drawPlayer(player * p, pixel * buffer){
 
 #define LEDLINE_COUNT 32
 
-int getLedlineCode(char s1, char s2) {
+long getLedlineCode(int s1, int s2) {
     if (s1 > LEDLINE_COUNT/2 || s2 > LEDLINE_COUNT/2) return 0xffffffff;
 
     // player 0
-    int sum0 = 0;
+    long sum0 = 0;
     for (int i = LEDLINE_COUNT-1; i >= LEDLINE_COUNT-s1; --i) {
         sum0 += pow(2, i);
     }
@@ -186,8 +187,8 @@ void gameLoop(data_passer * dp, struct timespec *start, struct timespec *end, st
 
     pixel * pixel = createPixel(0xff, 0xff, 0x00);
 
-    player * player1 = createPlayer(SCREEN_SIZE_X/2, SCREEN_SIZE_Y/2, createPixel(0xff, 0xff, 0x00), 0);
-    player * player2 = createPlayer(0, SCREEN_SIZE_Y/2, createPixel(0xff, 0x00, 0x00), 1);
+    player * player1 = createPlayer(createPixel(0xff, 0xff, 0x00), 0);
+    player * player2 = createPlayer(createPixel(0xff, 0x00, 0x00), 1);
 
 
     clearBuffer(dp->game_buffer);
@@ -231,18 +232,21 @@ void gameLoop(data_passer * dp, struct timespec *start, struct timespec *end, st
             updatePlayer(player2, dp);
 
             if (detectCollision(player1, b)){
-                player1->lives --;
+                player1->lives -= 1;
                 reset = true;
             }
             if (detectCollision(player2, b)){
-                player2->lives --;
+                player2->lives -= 1;
                 reset = true;
             }
 
             if (reset){
                 reset = false;
-
                 *ledline = getLedlineCode(player1->lives, player2->lives);
+                printf("%d:%d\n", player1->lives, player2->lives);
+                fflush(stdout);
+                sleep(3);
+
                 resetPlayer(player1);
                 resetPlayer(player2);
                 clearBuffer(dp->game_buffer);
