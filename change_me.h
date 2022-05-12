@@ -66,14 +66,17 @@ typedef union knobs {
     uint32_t d;
 } knobs;
 
-typedef struct knobs_values {
-    unsigned b_p : 1;
-    unsigned g_p : 1;
-    unsigned r_p : 1;
-    uint8_t b, g, r;
-    unsigned b_s : 1;
-    unsigned g_s : 1;
-    unsigned r_s : 1;
+typedef union knobs_values {
+    struct{
+        unsigned b_p : 1;
+        unsigned g_p : 1;
+        unsigned r_p : 1;
+        uint8_t b, g, r;
+        unsigned b_s : 1;
+        unsigned g_s : 1;
+        unsigned r_s : 1;
+    };
+    uint64_t d;
 } knobs_values;
 
 typedef struct player {

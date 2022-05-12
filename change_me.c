@@ -33,12 +33,12 @@ void clearBuffer(pixel *buffer) {
 }
 void drawArena(pixel *buffer) {
     pixel p;
-    p.r = 0xff;
-    p.g = 0xff;
-    p.b = 0xff;
+    p.r = 31;
+    p.g = 63;
+    p.b = 31;
     for (unsigned y = 0; y < SCREEN_SIZE_Y; y++){
         for (unsigned x = 0; x < SCREEN_SIZE_X; x++){
-            if (x < ARENA_WALL_WIDTH || x > SCREEN_SIZE_X - ARENA_WALL_WIDTH && x || y < ARENA_WALL_WIDTH || y > SCREEN_SIZE_Y - ARENA_WALL_WIDTH){
+            if (x < ARENA_WALL_WIDTH || x > SCREEN_SIZE_X - ARENA_WALL_WIDTH || y < ARENA_WALL_WIDTH || y > SCREEN_SIZE_Y - ARENA_WALL_WIDTH){
                 addToBuffer(x, y, &p, buffer);
             }
         }
@@ -92,7 +92,7 @@ player * createPlayer(int color, char id){
     }
 
     p->width = BASE_PLAYER_WIDTH;
-    p->rotation = (float)rand()/(float)(RAND_MAX/3.14*2);
+    p->rotation = ((float)rand()/RAND_MAX)*(3.14159*2);
     p->d_x = 1;
     p->d_y = 1;
     p->speed = BASE_PLAYER_SPEED;
@@ -155,8 +155,6 @@ int detectCollision(player * player, pixel * buffer){
                         fflush(stdout);
                         pixel * p = getFromBuffer(player->x+x, player->y+y, buffer);
                         if ((p->r != 0 || p->g != 0 || p->b != 0)){
-                            printf("collision: player%d\n", player->id);
-                            fflush(stdout);
                             player->last_x = player->x;
                             player->last_y = player->y;
                             return 1;
@@ -203,22 +201,33 @@ void resetPlayer(player * p){
         p->x = 5*SCREEN_SIZE_X/8 + rand() % (SCREEN_SIZE_X/4);
         p->y = SCREEN_SIZE_Y/4 + rand() % (SCREEN_SIZE_Y/2);
     }
-    p->rotation = (float)rand()/(float)(RAND_MAX/3.14*2);
+    p->rotation = ((float)rand()/RAND_MAX)*(3.14159*2);
     p->last_x = -100;
     p->last_y = -100;
 }
 
-void selectColor(pixel * colors, player * p1, player * p2, pixel * buffer, knobs_values * k){
+void selectColor(pixel * colors, player * p1, player * p2, pixel * buffer, knobs_values * k, knobs_values * last_k){
     if (k->r_s){
-        p1->color ++;
-        p1->color = p1->color % NUM_OF_COLORS;
+        if (last_k->r/4 != k->r/4){
+            p1->color ++;
+            p1->color = p1->color % NUM_OF_COLORS;
+            if (p1->color == p2->color){
+                p1->color ++;
+            }
+            p1->color = p1->color % NUM_OF_COLORS;
+        }
     }
     if (k->b_s){
-        p2->color ++;
-        p2->color = p2->color % NUM_OF_COLORS;
+        if (last_k->b/4 != k->b/4){
+            p2->color ++;
+            p2->color = p2->color % NUM_OF_COLORS;
+            if (p1->color == p2->color){
+                p2->color ++;
+            }
+            p2->color = p2->color % NUM_OF_COLORS;
+        }
     }
-
-
+    last_k->d = k->d;
 }
 
 void loadKnobsInput(knobs_values * knobs_values, knobs * k, knobs * last_k, uint32_t new_data){
@@ -232,11 +241,13 @@ void loadKnobsInput(knobs_values * knobs_values, knobs * k, knobs * last_k, uint
     }
 
     if (k->r != last_k->r){
+        knobs_values->r = k->r;
         knobs_values->r_s = 1;
     } else {
         knobs_values->r_s = 0;
     }
     if (k->b != last_k->b){
+        knobs_values->b = k->b;
         knobs_values->b_s = 1;
     } else {
         knobs_values->b_s = 0;
@@ -256,6 +267,7 @@ void gameLoop(data_passer * dp, struct timespec *start, struct timespec *end, st
 
     knobs k;
     knobs last_k;
+    knobs_values last_knobs_values;
     knobs_values knobs_values;
 
     k.d = 0;
@@ -326,8 +338,6 @@ void gameLoop(data_passer * dp, struct timespec *start, struct timespec *end, st
 
                     if (reset){
                         uint32_t last_lives = *ledline;
-                        printf("%d:%d\n", player1->lives, player2->lives);
-                        fflush(stdout);
 
                         struct timespec short_sl = {0, 200000000L};
                         for (int i = 0; i < 4; i ++){
@@ -352,7 +362,7 @@ void gameLoop(data_passer * dp, struct timespec *start, struct timespec *end, st
 
             if (dp->scene == 1){
                 b = dp->menu_buffer;
-                selectColor(colors_p, player1, player2, b, &knobs_values);
+                selectColor(colors_p, player1, player2, b, &knobs_values, &last_knobs_values);
 
                 *rgb1 = colors_l[player1->color].d;
                 *rgb2 = colors_l[player2->color].d;
