@@ -53,10 +53,30 @@ pixel * createPixel(int r, int g, int b){
     return p;
 }
 
-pixel * createPixelHex(int data){
+pixel * createPixelHex(uint16_t data){
     pixel * p = malloc(sizeof(pixel));
     p->d = data;
     return p;
+}
+
+pixel * generate_colors_p() {
+    pixel *pixels = malloc(NUM_OF_COLORS * sizeof(pixel));
+    for (int i = 0; i < NUM_OF_COLORS; ++i) {
+        pixel p;
+        p.d = colors_16bit[i];
+        pixels[i] = p;
+    }
+    return pixels;
+}
+
+led * generate_colors_l() {
+    led *leds = malloc(NUM_OF_COLORS * sizeof(led));
+    for (int i = 0; i < NUM_OF_COLORS; ++i) {
+        led l;
+        l.d = colors_24bit[i];
+        leds[i] = l;
+    }
+    return leds;
 }
 
 player * createPlayer(pixel * color, char id){
@@ -224,7 +244,8 @@ void gameLoop(data_passer * dp, struct timespec *start, struct timespec *end, st
     volatile uint32_t *ledline = (spiled_reg_base + SPILED_REG_LED_LINE_o);
     *ledline = getLedlineCode(MAX_LIVES, MAX_LIVES);
     volatile uint32_t *rgb1 = (spiled_reg_base + SPILED_REG_LED_RGB1_o);
-    *rgb1 = ((union led){.r = 0x10, .g = 0x10, .b = 0x10}).d;
+    volatile uint32_t *rgb2 = (spiled_reg_base + SPILED_REG_LED_RGB2_o);
+
     volatile uint32_t *knobs_input = (spiled_reg_base + SPILED_REG_KNOBS_8BIT_o);
 
     knobs k;
@@ -237,10 +258,16 @@ void gameLoop(data_passer * dp, struct timespec *start, struct timespec *end, st
     time_t t;
     srand((unsigned) time(&t));
 
-    pixel * b;
+    pixel *b;
 
-    player * player1 = createPlayer(createPixel(0xff, 0xff, 0x00), 0);
-    player * player2 = createPlayer(createPixel(0xff, 0x00, 0x00), 1);
+    pixel *colors_p = generate_colors_p();
+    led *colors_l = generate_colors_l();
+
+    player * player1 = createPlayer(&colors_p[0], 0);
+    player * player2 = createPlayer(&colors_p[1], 1);
+
+    *rgb1 = colors_l[0].d;
+    *rgb2 = colors_l[1].d;
 
 
     clearBuffer(dp->game_buffer);
