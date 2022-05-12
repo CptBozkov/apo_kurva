@@ -3,10 +3,10 @@ CC = arm-linux-gnueabihf-gcc
 CFLAGS =-g -std=gnu99 -O1 -Wall
 LDFLAGS = -lrt -lpthread -lm
 
-SOURCES = change_me.c lib/mzapo_phys.c lib/mzapo_parlcd.c
+SOURCES = change_me.c lib/mzapo_phys.c lib/mzapo_parlcd.c lib/font_rom8x16.c
 #SOURCES += font_prop14x16.c font_rom8x16.c
 TARGET_EXE = change_me
-TARGET_IP = 192.168.223.112
+TARGET_IP = 192.168.223.219
 TARGET_DIR = apo_kurva
 
 OBJECTS += $(filter %.o,$(SOURCES:%.c=%.o))

@@ -41,23 +41,23 @@ typedef union pixel {
     uint16_t d;
 } pixel;
 
-/*
+
 // font
   font_descriptor_t font = font_rom8x16;
 
-  void pchar(char c, unsigned x, unsigned y) {
+void pchar(char c, unsigned x, unsigned y) {
     for (unsigned w = 0; w < font.maxwidth; w++) {
         for (unsigned h = 0; h < font.height; h++) {
-            if ((font.bits[c - font.firstchar) * font.height + h] & (1<<w))) {
+            if (font.bits[(c - font.firstchar) * font.height + h] & (1<<w))) {
                 buffer[x + w][y + h] =  (union pixel){ .b = 0x1f };
             }
         }
     }
-  }
+}
 
 
   // end of font
-*/
+
 
 int main(int argc, char *argv[])
 {

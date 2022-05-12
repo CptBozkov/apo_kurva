@@ -105,7 +105,7 @@ player * createPlayer(int color, char id){
 
 data_passer * createDataPasser(){
     data_passer * dp = malloc(sizeof(data_passer));
-    dp->game_buffer = malloc(SCREEN_SIZE_XF*SCREEN_SIZE_Y*sizeof(pixel));
+    dp->game_buffer = malloc(SCREEN_SIZE_X*SCREEN_SIZE_Y*sizeof(pixel));
     dp->menu_buffer = malloc(SCREEN_SIZE_X*SCREEN_SIZE_Y*sizeof(pixel));
     dp->scene = 1;
     dp->draw = false;
@@ -257,14 +257,20 @@ void loadKnobsInput(knobs_values * knobs_values, knobs * k, knobs * last_k, uint
 void pchar(char c, unsigned x, unsigned y, font_descriptor_t font, pixel * buffer) {
     pixel p;
     p.d = 0xFFFF;
-    for (unsigned w = 0; w < font.maxwidth; w++) {
-        for (unsigned h = 0; h < font.height; h++) {
-            if (font.bits[(c - font.firstchar) * font.height + h] & (1<<w)) {
-                printf("aaa\n");
-                fflush(stdout);
+    //printf("%d %d\n", font.maxwidth, font.height);
+    //fflush(stdout);
+    for (unsigned h = 0; h < font.height; h++) {
+        for (unsigned w = 0; w < font.maxwidth; w++) {
+            if (font.bits[(c - font.firstchar) * font.height + h] & (0x8000>>w)) {
                 addToBuffer(x+w, y+h, &p, buffer);
             }
         }
+    }
+}
+
+void pstring(int x, int y, char * s, int n, font_descriptor_t font, pixel * buffer){
+    for (int i = 0; i < n; i ++){
+        pchar(s[i], x+i * font.maxwidth, y, font, buffer);
     }
 }
 
@@ -388,9 +394,7 @@ void gameLoop(data_passer * dp, struct timespec *start, struct timespec *end, st
                 drawCircle(SCREEN_SIZE_X/4, SCREEN_SIZE_Y/2, 50, &colors_p[player1->color], b);
                 drawCircle(3*SCREEN_SIZE_X/4, SCREEN_SIZE_Y/2, 50, &colors_p[player2->color], b);
 
-                for (int i = 0; i < 10; ++i) {
-                    pchar('a', 50+i*16, 50, font, b);
-                }
+                pstring(140, SCREEN_SIZE_Y - 30, "Press green to start!", 21, font, b);
 
 
             }
