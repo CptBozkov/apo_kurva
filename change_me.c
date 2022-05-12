@@ -254,6 +254,20 @@ void loadKnobsInput(knobs_values * knobs_values, knobs * k, knobs * last_k, uint
     }
 }
 
+void pchar(char c, unsigned x, unsigned y, font_descriptor_t font, pixel * buffer) {
+    pixel p;
+    p.d = 0xFFFF;
+    for (unsigned w = 0; w < font.maxwidth; w++) {
+        for (unsigned h = 0; h < font.height; h++) {
+            if (font.bits[(c - font.firstchar) * font.height + h] & (1<<w)) {
+                printf("aaa\n");
+                fflush(stdout);
+                addToBuffer(x+w, y+h, &p, buffer);
+            }
+        }
+    }
+}
+
 void gameLoop(data_passer * dp, struct timespec *start, struct timespec *end, struct timespec *res){
     void *parlcd_reg_base = map_phys_address(PARLCD_REG_BASE_PHYS, PARLCD_REG_SIZE, 0);
     volatile void *spiled_reg_base = map_phys_address(SPILED_REG_BASE_PHYS, SPILED_REG_SIZE, 0);
@@ -264,6 +278,8 @@ void gameLoop(data_passer * dp, struct timespec *start, struct timespec *end, st
     volatile uint32_t *rgb2 = (spiled_reg_base + SPILED_REG_LED_RGB2_o);
 
     volatile uint32_t *knobs_input = (spiled_reg_base + SPILED_REG_KNOBS_8BIT_o);
+
+    font_descriptor_t font = font_rom8x16;
 
     knobs k;
     knobs last_k;
@@ -364,11 +380,19 @@ void gameLoop(data_passer * dp, struct timespec *start, struct timespec *end, st
                 b = dp->menu_buffer;
                 selectColor(colors_p, player1, player2, b, &knobs_values, &last_knobs_values);
 
+
+
                 *rgb1 = colors_l[player1->color].d;
                 *rgb2 = colors_l[player2->color].d;
 
                 drawCircle(SCREEN_SIZE_X/4, SCREEN_SIZE_Y/2, 50, &colors_p[player1->color], b);
                 drawCircle(3*SCREEN_SIZE_X/4, SCREEN_SIZE_Y/2, 50, &colors_p[player2->color], b);
+
+                for (int i = 0; i < 10; ++i) {
+                    pchar('a', 50+i*16, 50, font, b);
+                }
+
+
             }
 
             if (knobs_values.g_p == 1){

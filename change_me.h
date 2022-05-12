@@ -19,6 +19,7 @@
 #include "lib/mzapo_parlcd.h"
 #include "lib/mzapo_phys.h"
 #include "lib/mzapo_regs.h"
+#include "lib/font_types.h"
 
 #define SCREEN_SIZE_X 480
 #define SCREEN_SIZE_Y 320
