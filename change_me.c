@@ -53,6 +53,12 @@ pixel * createPixel(int r, int g, int b){
     return p;
 }
 
+pixel * createPixelHex(int data){
+    pixel * p = malloc(sizeof(pixel));
+    p->d = data;
+    return p;
+}
+
 player * createPlayer(pixel * color, char id){
     player * p = malloc(sizeof(player));
     p->id = id;
@@ -182,6 +188,35 @@ void resetPlayer(player * p){
     p->last_y = -100;
 }
 
+void selectColor(pixel * c1, pixel * c2, pixel * buffer, knobs * k){
+
+}
+
+void loadKnobsInput(knobs * knob_values, knobs * k, knobs * last_k, uint32_t new_data){
+    last_k->d = k->d;
+    k->d = new_data;
+
+    if (k->g_p == 1){
+        if (last_k->g_p == 0) {
+            printf("g_p\n");
+            fflush(stdout);
+            knob_values->g_p = 1;
+        } else {
+            knob_values->g_p = 0;
+        }
+    } else {
+        knob_values->g_p = 0;
+    }
+
+    if (k->r != last_k->r){
+        printf("k->r: %d\n", k->r);
+    }
+    if (k->b != last_k->b){
+        printf("k->b: %d\n", k->b);
+    }
+    fflush(stdout);
+}
+
 void gameLoop(data_passer * dp, struct timespec *start, struct timespec *end, struct timespec *res){
     void *parlcd_reg_base = map_phys_address(PARLCD_REG_BASE_PHYS, PARLCD_REG_SIZE, 0);
     volatile void *spiled_reg_base = map_phys_address(SPILED_REG_BASE_PHYS, SPILED_REG_SIZE, 0);
@@ -191,14 +226,18 @@ void gameLoop(data_passer * dp, struct timespec *start, struct timespec *end, st
     volatile uint32_t *rgb1 = (spiled_reg_base + SPILED_REG_LED_RGB1_o);
     *rgb1 = ((union led){.r = 0x10, .g = 0x10, .b = 0x10}).d;
     volatile uint32_t *knobs_input = (spiled_reg_base + SPILED_REG_KNOBS_8BIT_o);
+
     knobs k;
+    knobs last_k;
+    knobs knobs_values;
+
+    k.d = 0;
+    last_k.d = 0;
 
     time_t t;
     srand((unsigned) time(&t));
 
     pixel * b;
-
-    pixel * pixel = createPixel(0xff, 0xff, 0x00);
 
     player * player1 = createPlayer(createPixel(0xff, 0xff, 0x00), 0);
     player * player2 = createPlayer(createPixel(0xff, 0x00, 0x00), 1);
@@ -208,81 +247,87 @@ void gameLoop(data_passer * dp, struct timespec *start, struct timespec *end, st
     drawArena(dp->game_buffer);
     clearBuffer(dp->menu_buffer);
 
+
+
     bool reset = false;
 
     while (dp->run){
         if (dp->doneDraw) {
             clock_gettime(CLOCK_MONOTONIC, start);
 
-            // sem prijde celej nas main loop
+            // main loop start
             dp->doneDraw = false;
             dp->draw = true;
-            if (dp->scene == 0){
-                b = dp->game_buffer;
 
-                if (dp->clear_game_buffer){
-                    dp->clear_game_buffer = false;
-                    clearBuffer(dp->game_buffer);
-                    drawArena(dp->game_buffer);
-                }
+            // loading input from knobs
+            loadKnobsInput(&knobs_values, &k, &last_k, *knobs_input);
 
-                updatePlayer(player1, dp);
-                updatePlayer(player2, dp);
+            if (reset){
+                reset = false;
+                dp->pause_length = 1;
+                dp->pause = 1;
+            }
 
-                if (reset){
-                    reset = false;
-                    sleep(1);
+            if (!dp->pause){
+                if (dp->scene == 0){
+                    b = dp->game_buffer;
 
-                }
-
-                if (detectCollision(player1, b)){
-                    player1->lives -= 1;
-                    reset = true;
-                }
-                if (detectCollision(player2, b)){
-                    player2->lives -= 1;
-                    reset = true;
-                }
-
-                if (reset){
-                    uint32_t last_lives = *ledline;
-                    printf("%d:%d\n", player1->lives, player2->lives);
-                    fflush(stdout);
-
-                    struct timespec short_sl = {0, 200000000};
-                    for (int i = 0; i < 4; i ++){
-                        nanosleep(&short_sl, NULL);
-                        *ledline = getLedlineCode(player1->lives, player2->lives);
-                        nanosleep(&short_sl, NULL);
-                        *ledline = last_lives;
+                    if (dp->clear_game_buffer){
+                        dp->clear_game_buffer = false;
+                        clearBuffer(dp->game_buffer);
+                        drawArena(dp->game_buffer);
                     }
 
-                    *ledline = getLedlineCode(player1->lives, player2->lives);
+                    updatePlayer(player1, dp);
+                    updatePlayer(player2, dp);
 
-                    resetPlayer(player1);
-                    resetPlayer(player2);
-                    clearBuffer(dp->game_buffer);
-                    drawArena(dp->game_buffer);
-                } else {
-                    drawPlayer(player1, b);
-                    drawPlayer(player2, b);
+
+                    if (detectCollision(player1, b)){
+                        player1->lives -= 1;
+                        reset = true;
+                    }
+                    if (detectCollision(player2, b)){
+                        player2->lives -= 1;
+                        reset = true;
+                    }
+
+                    if (reset){
+                        uint32_t last_lives = *ledline;
+                        printf("%d:%d\n", player1->lives, player2->lives);
+                        fflush(stdout);
+
+                        struct timespec short_sl = {0, 200000000L};
+                        for (int i = 0; i < 4; i ++){
+                            nanosleep(&short_sl, NULL);
+                            *ledline = getLedlineCode(player1->lives, player2->lives);
+                            nanosleep(&short_sl, NULL);
+                            *ledline = last_lives;
+                        }
+
+                        *ledline = getLedlineCode(player1->lives, player2->lives);
+
+                        resetPlayer(player1);
+                        resetPlayer(player2);
+                        clearBuffer(dp->game_buffer);
+                        drawArena(dp->game_buffer);
+                    } else {
+                        drawPlayer(player1, b);
+                        drawPlayer(player2, b);
+                    }
                 }
             }
 
             if (dp->scene == 1){
                 b = dp->menu_buffer;
-                drawCircle(SCREEN_SIZE_X/4, SCREEN_SIZE_Y/2, 30, createPixel(0x02, 0x02,0x02), b);
-                drawCircle(3*SCREEN_SIZE_X/4, SCREEN_SIZE_Y/2, 30, createPixel(0x02, 0x02,0x02), b);
-
-                k.d = *knobs_input;
-
-                if (k.g_p){
-                    dp->scene = 0;
-                }
+                selectColor(&player1->color, &player2->color, b, &knobs_values);
+                drawCircle(SCREEN_SIZE_X/4, SCREEN_SIZE_Y/2, 50, createPixelHex(0x5acb), b);
+                drawCircle(3*SCREEN_SIZE_X/4, SCREEN_SIZE_Y/2, 50, createPixelHex(0x5acb), b);
             }
 
-            // tady konci nas main loop
-
+            if (knobs_values.g_p == 1){
+                dp->scene = !dp->scene;
+            }
+            // main loop end
 
             clock_gettime(CLOCK_MONOTONIC, end);
             res->tv_nsec = 1000000000/FPS - (end->tv_nsec - start->tv_nsec);
@@ -319,7 +364,7 @@ void draw(data_passer * dp){
     }
 }
 
-void INThandler(){
+void exit_0(){
     exit(0);
 }
 
@@ -328,7 +373,7 @@ void keyboard(data_passer * dp){
     int device = open(devname, O_RDONLY);
     struct input_event ev;
 
-    signal(SIGINT, INThandler);
+    signal(SIGINT, exit_0);
 
     while(dp->run)
     {
@@ -356,6 +401,15 @@ void keyboard(data_passer * dp){
     }
 }
 
+void pauseLoop(data_passer * dp){
+    while (dp->run){
+        if (dp->pause){
+            sleep(dp->pause_length);
+            dp->pause = 0;
+        }
+    }
+}
+
 // funkce kterou predavam gameLoopThread
 void* gameLoopThread(void * dp_void){
     data_passer * dp = (data_passer *) dp_void;
@@ -379,16 +433,24 @@ void* keyboardThread(void * dp_void){
     return NULL;
 }
 
+void* pauseThread(void * dp_void){
+    data_passer * dp = (data_passer *) dp_void;
+    pauseLoop(dp);
+    return NULL;
+}
+
 int main (){
     data_passer * dp = createDataPasser();
 
     pthread_t tid0;
     pthread_t tid1;
     pthread_t tid2;
+    pthread_t tid3;
 
     pthread_create(&tid0, NULL, gameLoopThread, (void *)dp);
     pthread_create(&tid1, NULL, drawThread, (void *)dp);
     pthread_create(&tid2, NULL, keyboardThread, (void *)dp);
+    pthread_create(&tid3, NULL, pauseThread, (void *)dp);
 
     pthread_exit(NULL);
     return 0;
