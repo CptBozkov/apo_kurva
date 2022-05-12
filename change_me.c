@@ -79,7 +79,7 @@ led * generate_colors_l() {
     return leds;
 }
 
-player * createPlayer(pixel * color, char id){
+player * createPlayer(int color, char id){
     player * p = malloc(sizeof(player));
     p->id = id;
 
@@ -96,7 +96,7 @@ player * createPlayer(pixel * color, char id){
     p->d_x = 1;
     p->d_y = 1;
     p->speed = BASE_PLAYER_SPEED;
-    p->color = *color;
+    p->color = color;
     p->last_x = -100;
     p->last_y = -100;
     p->lives = MAX_LIVES;
@@ -171,8 +171,8 @@ int detectCollision(player * player, pixel * buffer){
     return 0;
 }
 
-void drawPlayer(player * p, pixel * buffer){
-    drawCircle((int) p->x, (int) p->y, p->width, &p->color, buffer);
+void drawPlayer(player * p, pixel * colors, pixel * buffer){
+    drawCircle((int) p->x, (int) p->y, p->width, &colors[p->color], buffer);
 }
 
 #define LEDLINE_COUNT 32
@@ -208,33 +208,39 @@ void resetPlayer(player * p){
     p->last_y = -100;
 }
 
-void selectColor(pixel * c1, pixel * c2, pixel * buffer, knobs * k){
+void selectColor(pixel * colors, player * p1, player * p2, pixel * buffer, knobs_values * k){
+    if (k->r_s){
+        p1->color ++;
+        p1->color = p1->color % NUM_OF_COLORS;
+    }
+    if (k->b_s){
+        p2->color ++;
+        p2->color = p2->color % NUM_OF_COLORS;
+    }
+
 
 }
 
-void loadKnobsInput(knobs * knob_values, knobs * k, knobs * last_k, uint32_t new_data){
+void loadKnobsInput(knobs_values * knobs_values, knobs * k, knobs * last_k, uint32_t new_data){
     last_k->d = k->d;
     k->d = new_data;
 
-    if (k->g_p == 1){
-        if (last_k->g_p == 0) {
-            printf("g_p\n");
-            fflush(stdout);
-            knob_values->g_p = 1;
-        } else {
-            knob_values->g_p = 0;
-        }
+    if (k->g_p == 1 && last_k->g_p == 0){
+        knobs_values->g_p = 1;
     } else {
-        knob_values->g_p = 0;
+        knobs_values->g_p = 0;
     }
 
     if (k->r != last_k->r){
-        printf("k->r: %d\n", k->r);
+        knobs_values->r_s = 1;
+    } else {
+        knobs_values->r_s = 0;
     }
     if (k->b != last_k->b){
-        printf("k->b: %d\n", k->b);
+        knobs_values->b_s = 1;
+    } else {
+        knobs_values->b_s = 0;
     }
-    fflush(stdout);
 }
 
 void gameLoop(data_passer * dp, struct timespec *start, struct timespec *end, struct timespec *res){
@@ -250,7 +256,7 @@ void gameLoop(data_passer * dp, struct timespec *start, struct timespec *end, st
 
     knobs k;
     knobs last_k;
-    knobs knobs_values;
+    knobs_values knobs_values;
 
     k.d = 0;
     last_k.d = 0;
@@ -263,11 +269,11 @@ void gameLoop(data_passer * dp, struct timespec *start, struct timespec *end, st
     pixel *colors_p = generate_colors_p();
     led *colors_l = generate_colors_l();
 
-    player * player1 = createPlayer(&colors_p[0], 0);
-    player * player2 = createPlayer(&colors_p[1], 1);
+    player * player1 = createPlayer(0, 0);
+    player * player2 = createPlayer(1, 1);
 
-    *rgb1 = colors_l[0].d;
-    *rgb2 = colors_l[1].d;
+    *rgb1 = colors_l[player1->color].d;
+    *rgb2 = colors_l[player2->color].d;
 
 
     clearBuffer(dp->game_buffer);
@@ -338,17 +344,21 @@ void gameLoop(data_passer * dp, struct timespec *start, struct timespec *end, st
                         clearBuffer(dp->game_buffer);
                         drawArena(dp->game_buffer);
                     } else {
-                        drawPlayer(player1, b);
-                        drawPlayer(player2, b);
+                        drawPlayer(player1, colors_p, b);
+                        drawPlayer(player2, colors_p, b);
                     }
                 }
             }
 
             if (dp->scene == 1){
                 b = dp->menu_buffer;
-                selectColor(&player1->color, &player2->color, b, &knobs_values);
-                drawCircle(SCREEN_SIZE_X/4, SCREEN_SIZE_Y/2, 50, createPixelHex(0x5acb), b);
-                drawCircle(3*SCREEN_SIZE_X/4, SCREEN_SIZE_Y/2, 50, createPixelHex(0x5acb), b);
+                selectColor(colors_p, player1, player2, b, &knobs_values);
+
+                *rgb1 = colors_l[player1->color].d;
+                *rgb2 = colors_l[player2->color].d;
+
+                drawCircle(SCREEN_SIZE_X/4, SCREEN_SIZE_Y/2, 50, &colors_p[player1->color], b);
+                drawCircle(3*SCREEN_SIZE_X/4, SCREEN_SIZE_Y/2, 50, &colors_p[player2->color], b);
             }
 
             if (knobs_values.g_p == 1){

@@ -66,6 +66,16 @@ typedef union knobs {
     uint32_t d;
 } knobs;
 
+typedef struct knobs_values {
+    unsigned b_p : 1;
+    unsigned g_p : 1;
+    unsigned r_p : 1;
+    uint8_t b, g, r;
+    unsigned b_s : 1;
+    unsigned g_s : 1;
+    unsigned r_s : 1;
+} knobs_values;
+
 typedef struct player {
     char id;
     int lives;
@@ -76,7 +86,7 @@ typedef struct player {
     int d_x;
     int d_y;
     float rotation;
-    pixel color;
+    int color;
     float last_x;
     float last_y;
 } player;
@@ -96,6 +106,9 @@ typedef struct data_passer{
     bool color;
 
     bool clear_game_buffer;
+
+    bool pause;
+    int pause_length;
 } data_passer;
 
 
