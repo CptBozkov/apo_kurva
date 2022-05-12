@@ -31,8 +31,7 @@ void clearBuffer(pixel *buffer) {
         }
     }
 }
-void clearArena(pixel *buffer) {
-    clearBuffer(buffer);
+void drawArena(pixel *buffer) {
     pixel p;
     p.r = 0xff;
     p.g = 0xff;
@@ -46,7 +45,7 @@ void clearArena(pixel *buffer) {
     }
 }
 
-pixel * createPixel(int r, int b, int g){
+pixel * createPixel(int r, int g, int b){
     pixel * p = malloc(sizeof(pixel));
     p->r = r;
     p->g = g;
@@ -205,7 +204,8 @@ void gameLoop(data_passer * dp, struct timespec *start, struct timespec *end, st
     player * player2 = createPlayer(createPixel(0xff, 0x00, 0x00), 1);
 
 
-    clearArena(dp->game_buffer);
+    clearBuffer(dp->game_buffer);
+    drawArena(dp->game_buffer);
     clearBuffer(dp->menu_buffer);
 
     bool reset = false;
@@ -222,7 +222,8 @@ void gameLoop(data_passer * dp, struct timespec *start, struct timespec *end, st
 
                 if (dp->clear_game_buffer){
                     dp->clear_game_buffer = false;
-                    clearArena(dp->game_buffer);
+                    clearBuffer(dp->game_buffer);
+                    drawArena(dp->game_buffer);
                 }
 
                 updatePlayer(player1, dp);
@@ -260,7 +261,8 @@ void gameLoop(data_passer * dp, struct timespec *start, struct timespec *end, st
 
                     resetPlayer(player1);
                     resetPlayer(player2);
-                    clearArena(dp->game_buffer);
+                    clearBuffer(dp->game_buffer);
+                    drawArena(dp->game_buffer);
                 } else {
                     drawPlayer(player1, b);
                     drawPlayer(player2, b);
@@ -269,20 +271,14 @@ void gameLoop(data_passer * dp, struct timespec *start, struct timespec *end, st
 
             if (dp->scene == 1){
                 b = dp->menu_buffer;
-                drawCircle(SCREEN_SIZE_X/4, SCREEN_SIZE_Y/2, 30, createPixel(0x20, 0x20,0x20), b);
-                drawCircle(3*SCREEN_SIZE_X/4, SCREEN_SIZE_Y/2, 30, createPixel(0x20, 0x20,0x20), b);
+                drawCircle(SCREEN_SIZE_X/4, SCREEN_SIZE_Y/2, 30, createPixel(0x02, 0x02,0x02), b);
+                drawCircle(3*SCREEN_SIZE_X/4, SCREEN_SIZE_Y/2, 30, createPixel(0x02, 0x02,0x02), b);
 
                 k.d = *knobs_input;
 
                 if (k.g_p){
                     dp->scene = 0;
                 }
-                /*if (k.r_p){
-                    speed += 1;
-                }
-                if (k.b_p){
-                    speed -= 1;
-                }*/
             }
 
             // tady konci nas main loop
