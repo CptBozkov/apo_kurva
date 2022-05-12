@@ -105,7 +105,7 @@ player * createPlayer(int color, char id){
 
 data_passer * createDataPasser(){
     data_passer * dp = malloc(sizeof(data_passer));
-    dp->game_buffer = malloc(SCREEN_SIZE_X*SCREEN_SIZE_Y*sizeof(pixel));
+    dp->game_buffer = malloc(SCREEN_SIZE_XF*SCREEN_SIZE_Y*sizeof(pixel));
     dp->menu_buffer = malloc(SCREEN_SIZE_X*SCREEN_SIZE_Y*sizeof(pixel));
     dp->scene = 1;
     dp->draw = false;
