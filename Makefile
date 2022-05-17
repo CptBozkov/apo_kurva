@@ -3,10 +3,17 @@ CC = arm-linux-gnueabihf-gcc
 CFLAGS =-g -std=gnu99 -O1 -Wall
 LDFLAGS = -lrt -lpthread -lm
 
-SOURCES = change_me.c lib/mzapo_phys.c lib/mzapo_parlcd.c lib/font_rom8x16.c
-#SOURCES += font_prop14x16.c font_rom8x16.c
-TARGET_EXE = change_me
-TARGET_IP = 192.168.223.219
+SOURCES = main.c
+SOURCES += player.c hardware.c
+# threads
+SOURCES += threads/draw.c threads/gameLoop.c threads/keyboard.c threads/pause.c
+# utils
+SOURCES += utils/buffer.c utils/font.c utils/colors.c utils/draw_objects.c
+#libs
+SOURCES += lib/mzapo_phys.c lib/mzapo_parlcd.c lib/font_rom8x16.c
+
+TARGET_EXE = main
+TARGET_IP = 192.168.223.212
 TARGET_DIR = apo_kurva
 
 OBJECTS += $(filter %.o,$(SOURCES:%.c=%.o))
