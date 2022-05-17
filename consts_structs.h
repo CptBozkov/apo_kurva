@@ -20,7 +20,7 @@
 #define ARENA_WALL_WIDTH 5
 
 #define LEDLINE_COUNT 32
-#define NUM_OF_COLORS 7
+#define NUM_OF_COLORS 8
 
 /* --- structs --- */
 typedef union led {

@@ -1,9 +1,9 @@
 #include "colors.h"
 #include <stdlib.h>
 
-// [0]: red, [1]: orange, [2]: yellow, [3]: green, [4]: blue, [5]: violet, [6]: pink
-const uint32_t colors_24bit[] = {0x440000, 0x661100, 0x221100, 0x001100, 0x000525, 0x220033, 0x330011};
-const uint16_t colors_16bit[] = {0xF800, 0xFC40, 0xFFC0, 0x07E0, 0x05DF, 0xDC1F, 0xF818};
+// [0]: red, [1]: orange, [2]: yellow, [3]: green, [4]: blue, [5]: violet, [6]: pink, [7]: cyan
+const uint32_t colors_24bit[] = {0x440000, 0x661100, 0x221100, 0x001100, 0x000525, 0x220033, 0x330011, 0x002222};
+const uint16_t colors_16bit[] = {0xF800, 0xFC40, 0xFFC0, 0x07E0, 0x05DF, 0xDC1F, 0xF818, 0x475F};
 
 pixel * createPixel(int r, int g, int b) {
     pixel * p = malloc(sizeof(pixel));

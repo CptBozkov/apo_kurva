@@ -149,11 +149,11 @@ void gameLoop(data_passer * dp, struct timespec *start, struct timespec *end, st
                 clearBuffer(b);
                 char * s;
                 if (player1->lives == 0){
-                    s = "Player1 wins!";
+                    s = "Player2 wins!";
                     drawVictoryScreen(s, b);
                 }
                 if (player2->lives == 0){
-                    s = "Player2 wins!";
+                    s = "Player1 wins!";
                     drawVictoryScreen(s, b);
                 }
             }
