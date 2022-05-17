@@ -20,8 +20,6 @@ void gameLoop(data_passer * dp, struct timespec *start, struct timespec *end, st
 
     volatile uint32_t *knobs_input = (spiled_reg_base + SPILED_REG_KNOBS_8BIT_o);
 
-    font_descriptor_t font = font_rom8x16;
-
     knobs k;
     knobs last_k;
     knobs_values last_knobs_values;
@@ -127,7 +125,9 @@ void gameLoop(data_passer * dp, struct timespec *start, struct timespec *end, st
                 drawCircle(SCREEN_SIZE_X/4, SCREEN_SIZE_Y/2, 50, &colors_p[player1->color], b);
                 drawCircle(3*SCREEN_SIZE_X/4, SCREEN_SIZE_Y/2, 50, &colors_p[player2->color], b);
 
-                pstring(140, SCREEN_SIZE_Y - 30, "Press green to start!", 21, font, b);
+                char * start = "Press green to start!";
+                int start_len =  get_double_font_width(start);
+                pstring_double(SCREEN_SIZE_X/2 - start_len/2, SCREEN_SIZE_Y - 30, start, b);
 
 
             }

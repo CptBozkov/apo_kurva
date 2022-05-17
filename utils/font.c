@@ -1,11 +1,9 @@
 #include "font.h"
-#include "buffer.h"
 
-void pchar(char c, unsigned x, unsigned y, font_descriptor_t font, pixel * buffer) {
+void pchar(char c, unsigned x, unsigned y, pixel * buffer) {
+    font_descriptor_t font = font_rom8x16;
     pixel p;
     p.d = 0xFFFF;
-    //printf("%d %d\n", font.maxwidth, font.height);
-    //fflush(stdout);
     for (unsigned h = 0; h < font.height; h++) {
         for (unsigned w = 0; w < font.maxwidth; w++) {
             if (font.bits[(c - font.firstchar) * font.height + h] & (0x8000>>w)) {
@@ -15,8 +13,46 @@ void pchar(char c, unsigned x, unsigned y, font_descriptor_t font, pixel * buffe
     }
 }
 
-void pstring(int x, int y, char * s, int n, font_descriptor_t font, pixel * buffer) {
+void pstring(int x, int y, char * s, pixel * buffer) {
+    font_descriptor_t font = font_rom8x16;
+    size_t n = strlen(s);
     for (int i = 0; i < n; i ++){
-        pchar(s[i], x+i * font.maxwidth, y, font, buffer);
+        pchar(s[i], x+i * font.maxwidth, y, buffer);
     }
+}
+
+void pchar_double(char c, unsigned x, unsigned y, pixel * buffer) {
+    font_descriptor_t font = font_rom8x16;
+    pixel p;
+    p.d = 0xFFFF;
+    for (unsigned h = 0; h < 2*font.height; h += 2) {
+        for (unsigned w = 0; w < 2*font.maxwidth; w +=2) {
+            if (font.bits[(c - font.firstchar) * font.height + h/2] & (0x8000>>(w/2))) {
+                addToBuffer(x+w, y+h, &p, buffer);
+                addToBuffer(x+w+1, y+h, &p, buffer);
+                addToBuffer(x+w, y+h+1, &p, buffer);
+                addToBuffer(x+w+1, y+h+1, &p, buffer);
+            }
+        }
+    }
+}
+
+void pstring_double(int x, int y, char * s, pixel * buffer) {
+    font_descriptor_t font = font_rom8x16;
+    size_t n = strlen(s);
+    for (int i = 0; i < n; i++){
+        pchar_double(s[i], x + i * 2*font.maxwidth, y, buffer);
+    }
+}
+
+int get_font_width(char * s) {
+    font_descriptor_t font = font_rom8x16;
+    size_t n = strlen(s);
+    return n * font.maxwidth;
+}
+
+int get_double_font_width(char * s) {
+    font_descriptor_t font = font_rom8x16;
+    size_t n = strlen(s);
+    return n * 2*font.maxwidth;
 }
