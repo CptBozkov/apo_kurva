@@ -13,7 +13,7 @@
 
 #define BASE_PLAYER_SPEED 50
 #define BASE_PLAYER_WIDTH 5
-#define MAX_LIVES 2
+#define MAX_LIVES 4
 #define TURN_SPEED 1
 #define PI 3.14159
 

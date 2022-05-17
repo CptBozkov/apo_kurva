@@ -101,7 +101,7 @@ void gameLoop(data_passer * dp, struct timespec *start, struct timespec *end, st
                         }
 
                         *ledline = getLedlineCode(player1->lives, player2->lives);
-                        if (player1 == 0 || player2 == 0){
+                        if (player1->lives == 0 || player2->lives == 0){
                             dp->scene = 2;
                         }
                         resetPlayer(player1);
@@ -117,8 +117,8 @@ void gameLoop(data_passer * dp, struct timespec *start, struct timespec *end, st
 
             /* ---  menu --- */
             if (dp->scene == 1){
-                clearBuffer(b);
                 b = dp->menu_buffer;
+                clearBuffer(b);
 
                 // set player colors by rotating knobs
                 selectColor(colors_p, player1, player2, b, &knobs_values, &last_knobs_values);
@@ -145,8 +145,8 @@ void gameLoop(data_passer * dp, struct timespec *start, struct timespec *end, st
             }
 
             if (dp->scene == 2) {
-                clearBuffer(b);
                 b = dp->menu_buffer;
+                clearBuffer(b);
                 char * s;
                 if (player1->lives == 0){
                     s = "Player1 wins!";
