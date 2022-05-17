@@ -113,22 +113,32 @@ void gameLoop(data_passer * dp, struct timespec *start, struct timespec *end, st
                 }
             }
 
+            /* ---  menu --- */
             if (dp->scene == 1){
                 b = dp->menu_buffer;
+
+                // set player colors by rotating knobs
                 selectColor(colors_p, player1, player2, b, &knobs_values, &last_knobs_values);
 
-
-
+                // reset rgb leds to correct color
                 *rgb1 = colors_l[player1->color].d;
                 *rgb2 = colors_l[player2->color].d;
 
+                // player labels
+                char * p1_label = "Player1";
+                char * p2_label = "Player2";
+                int p_label_len =  get_double_font_width(p1_label);
+                pstring_double(SCREEN_SIZE_X/4 - p_label_len/2, SCREEN_SIZE_Y/2 - 100, p1_label, b);
+                pstring_double(3*SCREEN_SIZE_X/4 - p_label_len/2, SCREEN_SIZE_Y/2 - 100, p2_label, b);
+
+                // player circles
                 drawCircle(SCREEN_SIZE_X/4, SCREEN_SIZE_Y/2, 50, &colors_p[player1->color], b);
                 drawCircle(3*SCREEN_SIZE_X/4, SCREEN_SIZE_Y/2, 50, &colors_p[player2->color], b);
 
-                char * start = "Press green to start!";
-                int start_len =  get_double_font_width(start);
-                pstring_double(SCREEN_SIZE_X/2 - start_len/2, SCREEN_SIZE_Y - 30, start, b);
-
+                // press green to start label
+                char * start_label = "Press green to start!";
+                int start_len =  get_double_font_width(start_label);
+                pstring_double(SCREEN_SIZE_X/2 - start_len/2, SCREEN_SIZE_Y - 40, start_label, b);
 
             }
 
