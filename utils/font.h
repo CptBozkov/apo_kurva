@@ -10,6 +10,8 @@ void pchar(char c, unsigned x, unsigned y, pixel * buffer);
 void pstring(int x, int y, char * s, pixel * buffer);
 void pchar_double(char c, unsigned x, unsigned y, pixel * buffer);
 void pstring_double(int x, int y, char * s, pixel * buffer);
+void pchar_quadruple(char c, unsigned x, unsigned y, pixel * buffer);
+void pstring_quadruple(int x, int y, char * s, pixel * buffer);
 int get_font_width(char * s);
 int get_double_font_width(char * s);
 
