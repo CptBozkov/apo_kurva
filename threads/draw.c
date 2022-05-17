@@ -15,10 +15,10 @@ void draw(data_passer * dp) {
         if (dp->draw){
             dp->draw = false;
 
-            if (dp->scene == 1) {
-                b = dp->menu_buffer;
-            } else {
+            if (dp->scene == 0){
                 b = dp->game_buffer;
+            } else if (dp->scene == 1 || dp->scene == 2) {
+                b = dp->menu_buffer;
             }
 
             for (unsigned i = 0; i <480*320; i++){

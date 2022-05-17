@@ -101,7 +101,9 @@ void gameLoop(data_passer * dp, struct timespec *start, struct timespec *end, st
                         }
 
                         *ledline = getLedlineCode(player1->lives, player2->lives);
-
+                        if (player1 == 0 || player2 == 0){
+                            dp->scene = 2;
+                        }
                         resetPlayer(player1);
                         resetPlayer(player2);
                         clearBuffer(dp->game_buffer);
@@ -115,6 +117,7 @@ void gameLoop(data_passer * dp, struct timespec *start, struct timespec *end, st
 
             /* ---  menu --- */
             if (dp->scene == 1){
+                clearBuffer(b);
                 b = dp->menu_buffer;
 
                 // set player colors by rotating knobs
@@ -139,11 +142,34 @@ void gameLoop(data_passer * dp, struct timespec *start, struct timespec *end, st
                 char * start_label = "Press green to start!";
                 int start_len =  get_double_font_width(start_label);
                 pstring_double(SCREEN_SIZE_X/2 - start_len/2, SCREEN_SIZE_Y - 40, start_label, b);
-
             }
 
+            if (dp->scene == 2) {
+                clearBuffer(b);
+                b = dp->menu_buffer;
+                char * s;
+                if (player1->lives == 0){
+                    s = "Player1 wins!";
+                    drawVictoryScreen(s, b);
+                }
+                if (player2->lives == 0){
+                    s = "Player2 wins!";
+                    drawVictoryScreen(s, b);
+                }
+            }
+
+
             if (knobs_values.g_p == 1){
-                dp->scene = !dp->scene;
+                if (dp->scene == 0){
+                    dp->scene = 1;
+                } else if (dp->scene == 1){
+                    dp->scene = 0;
+                } else if (dp->scene == 2){
+                    dp->scene = 1;
+                    player1->lives = MAX_LIVES;
+                    player2->lives = MAX_LIVES;
+                    *ledline = getLedlineCode(player1->lives, player2->lives);
+                }
             }
             // main loop end
 

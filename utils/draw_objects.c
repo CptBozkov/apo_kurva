@@ -29,3 +29,7 @@ void drawArena(pixel *buffer) {
         }
     }
 }
+
+void drawVictoryScreen(char * message, pixel * buffer) {
+    pstring_double(SCREEN_SIZE_X/2 - get_double_font_width(message)/2, SCREEN_SIZE_Y/2 - 16, message, buffer);
+}

@@ -37,13 +37,23 @@ void updatePlayer(player * p, data_passer * dp) {
             p->rotation -= turn_speed * (1.0/FPS);
         }
         if (dp->keys[1]){
+            p->speed = BASE_PLAYER_SPEED * 2;
+        } else {
+            p->speed = BASE_PLAYER_SPEED;
+        }
+        if (dp->keys[2]){
             p->rotation += turn_speed * (1.0/FPS);
         }
     } else {
-        if (dp->keys[2]){
+        if (dp->keys[3]){
             p->rotation -= turn_speed * (1.0/FPS);
         }
-        if (dp->keys[3]){
+        if (dp->keys[4]){
+            p->speed = BASE_PLAYER_SPEED * 2;
+        } else {
+            p->speed = BASE_PLAYER_SPEED;
+        }
+        if (dp->keys[5]){
             p->rotation += turn_speed * (1.0/FPS);
         }
     }
@@ -92,23 +102,37 @@ void resetPlayer(player * p) {
 
 void selectColor(pixel * colors, player * p1, player * p2, pixel * buffer, knobs_values * k, knobs_values * last_k) {
     if (k->r_s){
-        if (last_k->r/4 != k->r/4){
+        if (last_k->r/4 > k->r/4){
             p1->color ++;
             p1->color = p1->color % NUM_OF_COLORS;
             if (p1->color == p2->color){
                 p1->color ++;
             }
             p1->color = p1->color % NUM_OF_COLORS;
+        } else if (last_k->r/4 < k->r/4){
+            p1->color --;
+            p1->color = (p1->color + NUM_OF_COLORS) % NUM_OF_COLORS;
+            if (p1->color == p2->color){
+                p1->color --;
+            }
+            p1->color = (p1->color + NUM_OF_COLORS) % NUM_OF_COLORS;
         }
     }
     if (k->b_s){
-        if (last_k->b/4 != k->b/4){
+        if (last_k->b/4 > k->b/4){
             p2->color ++;
             p2->color = p2->color % NUM_OF_COLORS;
             if (p1->color == p2->color){
                 p2->color ++;
             }
             p2->color = p2->color % NUM_OF_COLORS;
+        } else if (last_k->b/4 < k->b/4){
+            p2->color --;
+            p2->color = (p2->color + NUM_OF_COLORS) % NUM_OF_COLORS;
+            if (p1->color == p2->color){
+                p2->color --;
+            }
+            p2->color = (p2->color + NUM_OF_COLORS) % NUM_OF_COLORS;
         }
     }
     last_k->d = k->d;
