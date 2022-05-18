@@ -22,7 +22,9 @@
 #define LEDLINE_COUNT 32
 #define NUM_OF_COLORS 8
 
-/* --- structs --- */
+/* --- unions && structs --- */
+
+/*struct that stores colors in 24-bit format*/
 typedef union led {
     struct {
         uint8_t b, g, r;
@@ -30,6 +32,7 @@ typedef union led {
     uint32_t d;
 } led;
 
+/*union that stores colors in 16-bit format*/
 typedef union pixel {
     struct {
         unsigned b : 5;
@@ -39,6 +42,7 @@ typedef union pixel {
     uint16_t d;
 } pixel;
 
+/*union that stores knobs input*/
 typedef union knobs {
     struct {
         uint8_t b, g, r;
@@ -49,6 +53,7 @@ typedef union knobs {
     uint32_t d;
 } knobs;
 
+/*union used to pass around knobs values*/
 typedef union knobs_values {
     struct{
         unsigned b_p : 1;
@@ -62,6 +67,7 @@ typedef union knobs_values {
     uint64_t d;
 } knobs_values;
 
+/*struct that stores players data*/
 typedef struct player {
     char id;
     int lives;
@@ -77,6 +83,7 @@ typedef struct player {
     float last_y;
 } player;
 
+/*struct that is used to pass data between threads throughout the game*/
 typedef struct data_passer{
     pixel *game_buffer;
     pixel *menu_buffer;

@@ -12,6 +12,7 @@
 #include "threads/keyboard.h"
 #include "threads/pause.h"
 
+/*returns new data passer*/
 data_passer * createDataPasser();
 
 #endif //APO_KURVA_MAIN_H

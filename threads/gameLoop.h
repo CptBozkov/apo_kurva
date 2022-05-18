@@ -15,7 +15,9 @@
 #include "../lib/mzapo_regs.h"
 #include "../lib/font_types.h"
 
+/*thread that processes whole game logic*/
 void* gameLoopThread(void * dp_void);
+/*function called by gameLoopThread, it contains main while loop*/
 void gameLoop(data_passer * dp, struct timespec *start, struct timespec *end, struct timespec *res);
 
 #endif //APO_KURVA_GAMELOOP_H
