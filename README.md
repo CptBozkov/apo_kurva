@@ -12,7 +12,7 @@ Aplikace je rozdělená do více souborů, podle následujícího diagramu. O ch
 - Hlavní herní smyčka. Zpracovává inputy z klávesnice, updateuje pozici hráčů, detekuje kolize a edituje aktivní pixel buffer. Pixel buffery jsou uloženy v `data_passer`, přičemž samotná hra a menu používají každá jiný.
 
 ###### draw
-- Vykresluje aktivní pixel buffer na displej.
+- Pokaždé když jí to gameLoop přikáže (pomocí změny `draw` v `data_passer` na true), vykresluje aktivní pixel buffer na displej. Po dokončení vykreslování nastaví `done_draw` v `data_passer` na true.
 
 ###### pause
 - Pause je thread, který může být spuštěn pomocí nastavení proměnné `pause` v `data_passer` na true. Předem musí bý nastavena délka pauzy pomocí nastavení `pause_length`(v sekundách) v `data_passer`. Po vypršení této doby nastaví pause thread `pause` v `data_passer` na false.
