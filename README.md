@@ -9,16 +9,16 @@ Aplikace je rozdělená do více souborů, podle následujícího diagramu. O ch
 #### Threads (červená)
 
 ###### gameLoop
-- Hlavní herní smyčka. ...
+- Hlavní herní smyčka. Zpracovává inputy z klávesnice, updateuje pozici hráčů, detekuje kolize a edituje aktivní pixel buffer. Pixel buffery jsou uloženy v `data_passer`, přičemž samotná hra a menu používají každá jiný.
 
 ###### draw
-- Stará se o vykreslování `pixel buffer` na displej. Data o stisknutí, případně uvolnění klávesy ukádá do `data_passer`.
+- Vykresluje aktivní pixel buffer na displej.
 
 ###### pause
-- ...
+- Pause je thread, který může být spuštěn pomocí nastavení proměnné `pause` v `data_passer` na true. Předem musí bý nastavena délka pauzy pomocí nastavení `pause_length`(v sekundách) v `data_passer`. Po vypršení této doby nastaví pause thread `pause` v `data_passer` na false.
 
 ###### keyboard
-- Načítá vstup z klávesnice
+- Načítá vstupy z klávesnice a ukádá je do `data_passer`.
 
 #### Player (fialová)
 - Obstarává funkcionalitu hráče. Od jeho vytvoření (`createPlayer()`) a updatování - změny polohy (`updatePlayer()`) až po detekování kolizí (`detectCollision()`).
@@ -26,19 +26,19 @@ Aplikace je rozdělená do více souborů, podle následujícího diagramu. O ch
 #### Utils (zelená)
 
 ###### colors
--
+- 
 
 ###### buffer
--
+- 
 
 ###### font
--
+- 
 
 ###### hardware
 - Načítá data z otočných voličů, obstaráva rozsvěcení ledline.
 
 ###### draw_objects
--
+- Obsahuje funkce které jsou používány k zapisování určitých 2D tvarů do pixel bufferů.
 
 #### Funkce pro práci s přípravkem (modrá)
 
