@@ -26,13 +26,13 @@ Aplikace je rozdělená do více souborů, podle následujícího diagramu. O ch
 #### Utils (zelená)
 
 ###### colors
-- 
+- Obsahuje funkce, které slouží k rychlému vytváření pixelů. Také jsou zde funkce na vytvoření bufferů s přednastavenýma barvama.
 
 ###### buffer
-- 
+- Jsou v něm uloženy funkce na jendodušší editaci pixelů v pixel bufferech a také funkce na jejich vyčištění.
 
 ###### font
-- 
+- Obsahuje funkce, které slouží k převedení charů a arrayů charů na text na displeji. Všechny funkce jsou zde v několika podobách pro modifikaci velikosti téhož fontu.
 
 ###### hardware
 - Načítá data z otočných voličů, obstaráva rozsvěcení ledline.
